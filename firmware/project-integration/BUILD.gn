@@ -1,0 +1,64 @@
+# Copyright (c) 2024 www.prechin.cn
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#    http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License. 
+
+import("//build/lite/config/component/lite_component.gni")
+
+lite_component("demo") {
+  features = [
+    # "00_template:template",
+    # "01_os_task:template",
+    # "02_os_queue:template",
+    # "03_os_binary_semaphore:template",
+    # "04_os_count_semaphore:template",
+    # "05_os_mutex:template",
+    # "06_os_event:template",
+    # "07_os_timer:template",
+    # "08_led:template",
+    # "50_eye_care:template",
+    "60_eye_care_cloud:template",
+    # "09_beep:template",
+    # "10_relay:template",
+    # "11_key:template",
+    # "12_dc_motor:template",
+    # "13_step_motor:template",
+    # "14_exti:template",
+    # "15_time:template",
+    # "16_pwm:template",
+    # "17_uart:template",
+    # "18_adc:template",
+    # "19_ds18b20:template",
+    # "20_oled:template",
+    # "21_nfc:template",
+    # "22_wifi_ap:template",
+    # "23_wifi_sta:template",
+    # "24_wifi_udp:template",
+    # "25_wifi_tcp:template",
+    # "26_wifi_mqtt:template",
+    # "27_wifi_huawei_iotda:template",
+    # "28_dht11:template",
+    # "29_hc-sr04:template",
+    # "30_sg90:template",
+    # "31_touch_key:template",
+    # "32_ir_xj:template",
+    # "33_ir_bz:template",
+    # "34_sound:template",
+    # "35_tilt:template",
+    # "36_vibrate:template",
+    # "37_fire:template",
+    # "38_raindrop:template",
+    # "39_smoke:template",
+    # "40_temp_sense:template",
+    # "41_light_sense:template",
+    # "42_ps2:template",
+  ]
+}

@@ -1,0 +1,36 @@
+# Secrets and local configuration
+.env
+*.local
+local.properties
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+
+# HarmonyOS / Hvigor
+.hvigor/
+.idea/
+.offline-hvigor/
+node_modules/
+oh_modules/
+build/
+out/
+*.hap
+*.hsp
+*.app
+
+# Firmware and generated files
+*.bin
+*.elf
+*.map
+*.log
+
+# Archives and temporary files
+*.zip
+*.7z
+*.rar
+*.tmp
+*.bak

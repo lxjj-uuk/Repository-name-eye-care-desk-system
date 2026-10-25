@@ -1,0 +1,25 @@
+#ifndef EYE_CARE_CLOUD_CONFIG_H
+#define EYE_CARE_CLOUD_CONFIG_H
+
+/*
+ * Fill these values before flashing.
+ * Do not commit real Wi-Fi or Huawei Cloud credentials.
+ */
+#define EYE_CARE_WIFI_SSID              "YOUR_2G_WIFI_SSID"
+#define EYE_CARE_WIFI_PASSWORD          "YOUR_WIFI_PASSWORD"
+
+#define EYE_CARE_IOTDA_SERVER_IP        "YOUR_IOTDA_DEVICE_MQTT_HOST"
+#define EYE_CARE_IOTDA_SERVER_PORT      1883
+
+#define EYE_CARE_DEVICE_ID              "YOUR_CLOUD_DEVICE_ID"
+#define EYE_CARE_MQTT_CLIENT_ID         "YOUR_MQTT_CLIENT_ID"
+#define EYE_CARE_MQTT_USERNAME          "YOUR_MQTT_USERNAME"
+#define EYE_CARE_MQTT_PASSWORD          "YOUR_MQTT_PASSWORD"
+
+#define EYE_CARE_DEFAULT_LUX_MIN        150
+#define EYE_CARE_DEFAULT_LUX_MAX        1000
+#define EYE_CARE_DEFAULT_SIT_WARN_MIN   45
+#define EYE_CARE_DEFAULT_SIT_STRONG_MIN 60
+#define EYE_CARE_DEFAULT_REPORT_SECONDS 5
+
+#endif

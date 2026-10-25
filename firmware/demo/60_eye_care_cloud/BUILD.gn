@@ -1,0 +1,34 @@
+static_library("template") {
+    sources = [
+        "template.c",
+        "bsp_i2c.c",
+        "bsp_bh1750.c",
+        "bsp_dht20.c",
+        "bsp_pir.c",
+        "bsp_buzzer.c",
+        "//vendor/pzkj/pz_hi3861/common/bsp/src/bsp_wifi.c",
+        "//vendor/pzkj/pz_hi3861/common/bsp/src/bsp_mqtt.c",
+
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTConnectClient.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTConnectServer.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTDeserializePublish.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTFormat.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTPacket.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTSerializePublish.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTSubscribeClient.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTSubscribeServer.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTUnsubscribeServer.c",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src/MQTTUnsubscribeClient.c",
+    ]
+
+    include_dirs = [
+        "//utils/native/lite/include",
+        "//kernel/liteos_m/kal/cmsis",
+        "//base/iot_hardware/peripheral/interfaces/kits",
+        "//vendor/pzkj/pz_hi3861/common/bsp/include",
+        "//foundation/communication/wifi_lite/interfaces/wifiservice",
+        "//third_party/paho.mqtt.embedded-c/MQTTPacket/src",
+        "//third_party/cJSON",
+        "."
+    ]
+}
