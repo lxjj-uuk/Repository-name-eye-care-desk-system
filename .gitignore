@@ -1,6 +1,7 @@
 # Secrets and local configuration
 .env
 *.local
+*.local.json5
 local.properties
 
 # Python
@@ -21,6 +22,7 @@ out/
 *.hap
 *.hsp
 *.app
+.pio/
 
 # Firmware and generated files
 *.bin

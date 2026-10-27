@@ -30,19 +30,12 @@ void buzzer_off(void)
 
 void buzzer_beep(uint32_t ms)
 {
-    uint32_t i;
-    uint32_t cycles = ms / 2;
-
-    if (cycles == 0) {
-        cycles = 1;
+    if (ms == 0) {
+        return;
     }
 
-    /* The onboard buzzer is passive; use the same 500 Hz timing as 09_beep. */
-    for (i = 0; i < cycles; i++) {
-        hi_gpio_set_ouput_val(BUZZER_PIN, HI_GPIO_VALUE0);
-        usleep(1000);
-        hi_gpio_set_ouput_val(BUZZER_PIN, HI_GPIO_VALUE1);
-        usleep(1000);
-    }
+    /* MH-FMD is active-low: hold the input low for the requested duration. */
+    buzzer_on();
+    usleep(ms * 1000U);
     buzzer_off();
 }

@@ -3,10 +3,49 @@ import { AppConfig } from '../common/AppConfig';
 import { Telemetry } from '../common/Models';
 
 @Component
+struct SummaryStatCard {
+  @Prop label: string = '';
+  @Prop value: string = '0';
+  @Prop unit: string = '';
+  @Prop color: string = '#1EC8A5';
+
+  build() {
+    Column({ space: 4 }) {
+      Row({ space: 5 }) {
+        Text('●')
+          .fontSize(8)
+          .fontColor(this.color)
+        Text(this.label)
+          .fontSize(11)
+          .fontColor('#8A94A6')
+      }
+      Row({ space: 3 }) {
+        Text(this.value)
+          .fontSize(21)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1B2430')
+        Text(this.unit)
+          .fontSize(10)
+          .fontColor('#A7B0BE')
+          .margin({ top: 6 })
+      }
+    }
+    .layoutWeight(1)
+    .padding(14)
+    .backgroundColor('#FFFFFF')
+    .borderRadius(16)
+    .alignItems(HorizontalAlign.Start)
+  }
+}
+
+@Component
 export struct HistoryPage {
   @State items: Telemetry[] = [];
   @State error: string = '';
   @State loading: boolean = false;
+  @State avgLuxValue: number = 0;
+  @State maxLuxValue: number = 0;
+  @State lowRatioValue: number = 0;
   private timer: number = -1;
 
   aboutToAppear(): void {
@@ -33,48 +72,40 @@ export struct HistoryPage {
     this.loading = true;
     try {
       const data = await ApiClient.getHistory();
-      this.items = data.items;
+      const historyItems = data.items;
+      this.items = historyItems;
+      this.updateSummary(historyItems);
       this.error = '';
     } catch (err) {
       this.items = [];
+      this.avgLuxValue = 0;
+      this.maxLuxValue = 0;
+      this.lowRatioValue = 0;
       this.error = `后端连接失败：${err}`;
     } finally {
       this.loading = false;
     }
   }
 
-  private avgLux(): number {
+  private updateSummary(items: Telemetry[]): void {
     let sum = 0;
     let count = 0;
-    for (let i = 0; i < this.items.length; i++) {
-      if (this.items[i].lux !== undefined) {
-        sum += this.items[i].lux ?? 0;
-        count++;
-      }
-    }
-    return count > 0 ? Math.round(sum / count) : 0;
-  }
-
-  private maxLux(): number {
     let max = 0;
-    for (let i = 0; i < this.items.length; i++) {
-      max = Math.max(max, this.items[i].lux ?? 0);
-    }
-    return max;
-  }
-
-  private lowRatio(): number {
     let low = 0;
-    let count = 0;
-    for (let i = 0; i < this.items.length; i++) {
-      if (this.items[i].lux !== undefined) {
+    for (let i = 0; i < items.length; i++) {
+      const lux = items[i].lux;
+      if (lux !== undefined && lux !== null) {
+        sum += lux;
         count++;
-        if ((this.items[i].lux ?? 0) < 150) {
+        max = Math.max(max, lux);
+        if (lux < 150) {
           low++;
         }
       }
     }
-    return count > 0 ? Math.round(low / count * 100) : 0;
+    this.avgLuxValue = count > 0 ? Math.round(sum / count) : 0;
+    this.maxLuxValue = max;
+    this.lowRatioValue = count > 0 ? Math.round(low / count * 100) : 0;
   }
 
   private barHeight(lux?: number): number {
@@ -180,9 +211,24 @@ export struct HistoryPage {
         }
 
         Row({ space: 10 }) {
-          this.statBlock('平均照度', `${this.avgLux()}`, 'lux', '#1EC8A5')
-          this.statBlock('峰值照度', `${this.maxLux()}`, 'lux', '#5A8DEE')
-          this.statBlock('偏低占比', `${this.lowRatio()}`, '%', '#F5B942')
+          SummaryStatCard({
+            label: '平均照度',
+            value: `${this.avgLuxValue}`,
+            unit: 'lux',
+            color: '#1EC8A5'
+          })
+          SummaryStatCard({
+            label: '峰值照度',
+            value: `${this.maxLuxValue}`,
+            unit: 'lux',
+            color: '#5A8DEE'
+          })
+          SummaryStatCard({
+            label: '偏低占比',
+            value: `${this.lowRatioValue}`,
+            unit: '%',
+            color: '#F5B942'
+          })
         }
         .width('100%')
 

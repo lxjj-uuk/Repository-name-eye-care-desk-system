@@ -50,10 +50,12 @@ export class ApiClient {
     const options: http.HttpRequestOptions = {
       method: method,
       header: headers,
-      extraData: body ? JSON.stringify(body) : '',
       connectTimeout: 15000,
       readTimeout: 30000
     };
+    if (body !== undefined) {
+      options.extraData = JSON.stringify(body);
+    }
     try {
       let requestUrl = `${AppConfig.baseUrl}${path}`;
       if (method === http.RequestMethod.GET) {

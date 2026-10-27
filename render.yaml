@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: eye-care-cloud
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////data/eye_care.db
+      - key: API_TOKEN
+        sync: false
+      - key: DEMO_USERNAME
+        value: demo
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: IOTDA_MOCK
+        value: "true"
+      - key: IOTDA_APP_MQTT_ENABLED
+        value: "false"
+      - key: LLM_API_URL
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false

@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from datetime import date
+from pathlib import Path
 
 import httpx
 from mcp import ClientSession, StdioServerParameters
@@ -10,8 +11,18 @@ from mcp.client.stdio import stdio_client
 
 
 def result_payload(result) -> dict:
-    structured = getattr(result, "structuredContent", None)
+    structured = getattr(result, "structured_content", None)
+    if structured is None:
+        structured = getattr(result, "structuredContent", None)
+    if isinstance(structured, str):
+        try:
+            structured = json.loads(structured)
+        except json.JSONDecodeError:
+            structured = None
     if isinstance(structured, dict):
+        nested = structured.get("result")
+        if isinstance(nested, dict):
+            return nested
         return structured
     content = getattr(result, "content", None) or []
     for item in content:
@@ -27,10 +38,11 @@ def result_payload(result) -> dict:
 
 
 async def main():
+    project_dir = Path(__file__).resolve().parent
     params = StdioServerParameters(
         command=sys.executable,
-        args=[r"D:\eye-care\mcp\server.py"],
-        cwd=r"D:\eye-care\mcp",
+        args=[str(project_dir / "server.py")],
+        cwd=str(project_dir),
         env={
             **os.environ,
             "BACKEND_BASE_URL": "http://127.0.0.1:8000",
@@ -51,6 +63,8 @@ async def main():
                     "date": date.today().isoformat(),
                 },
             )
+            if os.getenv("DEBUG_MCP") == "1":
+                print("raw summary:", repr(summary))
             summary_data = result_payload(summary)
             print("summary.risk:", summary_data.get("risk_level"))
             print("summary.insights:", len(summary_data.get("insights", [])))
