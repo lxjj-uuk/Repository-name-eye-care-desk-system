@@ -1,0 +1,12 @@
+.git
+.hvigor-home
+app
+backend/.venv
+backend/**/*.db
+backend/**/*.log
+docs
+firmware
+gateway
+mcp
+*.hap
+*.bin

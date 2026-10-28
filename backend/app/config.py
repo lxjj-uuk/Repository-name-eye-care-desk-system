@@ -18,9 +18,18 @@ def _origins(value: str) -> Tuple[str, ...]:
     return tuple(item.strip() for item in value.split(",") if item.strip())
 
 
+def _database_url() -> str:
+    value = os.getenv("DATABASE_URL", "sqlite:///./eye_care.db")
+    if value.startswith("postgres://"):
+        value = "postgresql+psycopg://" + value[len("postgres://"):]
+    elif value.startswith("postgresql://"):
+        value = "postgresql+psycopg://" + value[len("postgresql://"):]
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./eye_care.db")
+    database_url: str = _database_url()
     api_token: str = os.getenv("API_TOKEN", "dev-token-change-me")
     demo_username: str = os.getenv("DEMO_USERNAME", "demo")
     demo_password: str = os.getenv("DEMO_PASSWORD", "demo123")
