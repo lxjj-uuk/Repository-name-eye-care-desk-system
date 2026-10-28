@@ -10,8 +10,8 @@
 #define EYE_CARE_DEFAULT_DEVICE_ID "hi3861_001"
 #define EYE_CARE_DEFAULT_UPLOAD_TOKEN "dev-token-change-me"
 
-/* ESP32-C3 UART connected to Hi3861 TX/RX. */
-#define EYE_CARE_UART_RX_PIN 16
-#define EYE_CARE_UART_TX_PIN 17
+/* ESP32 UART remapped to pins available on the ESP32-D0WD dev board. */
+#define EYE_CARE_UART_RX_PIN 25
+#define EYE_CARE_UART_TX_PIN 26
 
 #endif
