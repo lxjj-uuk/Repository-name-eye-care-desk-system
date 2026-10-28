@@ -11,7 +11,7 @@
 #define EYE_CARE_DEFAULT_UPLOAD_TOKEN "dev-token-change-me"
 
 /* ESP32-C3 UART connected to Hi3861 TX/RX. */
-#define EYE_CARE_UART_RX_PIN 4
-#define EYE_CARE_UART_TX_PIN 5
+#define EYE_CARE_UART_RX_PIN 16
+#define EYE_CARE_UART_TX_PIN 17
 
 #endif

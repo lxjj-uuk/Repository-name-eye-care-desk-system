@@ -1,4 +1,4 @@
-# ESP32-C3 网关
+# ESP32 网关
 
 固件负责：
 
@@ -11,8 +11,8 @@
 ## 接线
 
 ```text
-Hi3861 TX → ESP32 GPIO4 (RX)
-Hi3861 RX → ESP32 GPIO5 (TX)
+Hi3861 TX → ESP32 GPIO16 (RX)
+Hi3861 RX → ESP32 GPIO17 (TX)
 Hi3861 GND → ESP32 GND
 ```
 
