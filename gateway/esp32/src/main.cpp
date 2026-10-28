@@ -133,21 +133,35 @@ bool postSensorLine(const char *line) {
   float humidity = 0.0F;
   int dhtStatus = -1;
   int occupied = 0;
-  if (sscanf(line,
-             "[eye-care] lux=%f(%d) temp=%f rh=%f(%d) occupied=%d",
-             &lux, &luxStatus, &temperature, &humidity, &dhtStatus,
-             &occupied) != 6) {
-    return false;
+  int sitContMin = 0;
+  int sitTotalMin = 0;
+  int lastMotionMin = 0;
+  float risk = 0.1F;
+  char riskLevel[16] = "low";
+  const int parsed = sscanf(
+      line,
+      "[eye-care] lux=%f(%d) temp=%f rh=%f(%d) occupied=%d "
+      "sit=%d total=%d last_motion=%d risk=%f risk_level=%15s",
+      &lux, &luxStatus, &temperature, &humidity, &dhtStatus, &occupied,
+      &sitContMin, &sitTotalMin, &lastMotionMin, &risk, riskLevel);
+  if (parsed != 11) {
+    if (sscanf(line,
+               "[eye-care] lux=%f(%d) temp=%f rh=%f(%d) occupied=%d",
+               &lux, &luxStatus, &temperature, &humidity, &dhtStatus,
+               &occupied) != 6) {
+      return false;
+    }
+    risk = occupied != 0 ? 0.2F : 0.1F;
   }
 
   JsonDocument document;
   document["device_id"] = deviceId;
   document["occupied"] = occupied != 0;
-  document["sit_cont_min"] = 0;
-  document["sit_total_min"] = 0;
-  document["last_motion_min"] = occupied != 0 ? 0 : 1;
-  document["risk"] = occupied != 0 ? 0.2 : 0.1;
-  document["risk_level"] = "low";
+  document["sit_cont_min"] = sitContMin;
+  document["sit_total_min"] = sitTotalMin;
+  document["last_motion_min"] = lastMotionMin;
+  document["risk"] = risk;
+  document["risk_level"] = riskLevel;
 
   if (luxStatus == 0) {
     document["lux"] = static_cast<int>(round(lux));
@@ -171,6 +185,17 @@ class ProvisioningCallbacks : public BLECharacteristicCallbacks {
     const DeserializationError error = deserializeJson(document, value);
     if (error) {
       notifyStatus("provisioning_error", "invalid_json");
+      return;
+    }
+
+    const char *command = document["command"] | "";
+    if (strcmp(command, "buzz") == 0) {
+      const char *pattern = document["pattern"] | "short";
+      const int duration = document["duration_ms"] | 200;
+      char line[48];
+      snprintf(line, sizeof(line), "BUZZ,%s,%d\n", pattern, duration);
+      Serial1.print(line);
+      notifyStatus("buzzer_command_sent", pattern);
       return;
     }
 

@@ -1,0 +1,18 @@
+static_library("template") {
+    sources = [
+        "template.c",
+        "bsp_i2c.c",
+        "bsp_bh1750.c",
+        "bsp_dht20.c",
+        "bsp_pir.c",
+        "bsp_buzzer.c"
+    ]
+
+    include_dirs = [
+        "//utils/native/lite/include",
+        "//kernel/liteos_m/kal/cmsis",
+        "//base/iot_hardware/peripheral/interfaces/kits",
+        "//vendor/pzkj/pz_hi3861/common/bsp/include",
+        "."
+    ]
+}

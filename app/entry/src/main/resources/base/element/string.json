@@ -1,6 +1,10 @@
 {
   "string": [
     {
+      "name": "bluetooth_permission_reason",
+      "value": "扫描并连接附近的 EyeCare 设备以完成 WiFi 配网"
+    },
+    {
       "name": "module_desc",
       "value": "工位用眼健康主模块"
     },

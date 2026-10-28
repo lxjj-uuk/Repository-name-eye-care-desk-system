@@ -1,50 +1,53 @@
-# Hi3861 Firmware
+# Hi3861 固件
 
-云端固件版本为 `demo/60_eye_care_cloud`。
+量产架构使用本地传感器节点 `demo/50_eye_care`。Hi3861 只负责采集
+BH1750、DHT20、人体传感器并控制蜂鸣器，通过 UART2 把数据发送给
+ESP32 网关。
 
-## 功能
+`demo/60_eye_care_cloud` 是保留的旧版直连华为 IoTDA 固件，只用于
+历史兼容，不再作为客户交付版本。
 
-- BH1750 光照采集
-- DHT20 温湿度采集
-- HC-SR501 活动检测
-- GPIO14 外接蜂鸣器控制
-- Hi3861 内置 Wi-Fi STA
-- MQTT 连接华为云 IoTDA
-- 5 秒属性上报
-- 云端命令处理和断线重连
+## 放入 SDK
 
-## 接入完整 SDK
-
-参考工程基于 `hi3861_hdu_iot_application`。将本目录中的
-`demo/60_eye_care_cloud` 放入：
+将整个目录复制到：
 
 ```text
-src/vendor/pzkj/pz_hi3861/demo/60_eye_care_cloud
+src/vendor/pzkj/pz_hi3861/demo/50_eye_care
 ```
 
-替换公共 BSP：
+再用 `project-integration/BUILD.gn` 配置 `demo/BUILD.gn`，只启用：
 
 ```text
-firmware/common-bsp/src/bsp_wifi.c
-firmware/common-bsp/src/bsp_mqtt.c
-firmware/common-bsp/include/bsp_wifi.h
-firmware/common-bsp/include/bsp_mqtt.h
+50_eye_care:template
 ```
 
-并用 `project-integration/BUILD.gn` 配置 `demo/BUILD.gn`，只启用：
+## 编译
+
+在完整 Hi3861 SDK 根目录执行：
+
+```powershell
+E:\DevEco-Device-Tool\core\deveco-venv\Scripts\hos.exe run --project-dir <SDK根目录> --environment hi3861
+```
+
+编译产物：
 
 ```text
-60_eye_care_cloud:template
+src/out/hispark_pegasus/wifiiot_hispark_pegasus/Hi3861_wifiiot_app_allinone.bin
 ```
 
-## 编译与烧录
+烧录时使用 `project-integration/flash-hi3861.ps1`，出现
+`BootromDownloadBoot.` 后短按一次开发板 RST。
 
-使用 DevEco Device Tool 或 VS Code：
+## 接线
 
 ```text
-Ctrl+Shift+B
+BH1750、DHT20: 3.3V / GND / SCL=GPIO9 / SDA=GPIO10
+人体检测 OUT: GPIO8
+蜂鸣器 I/O: GPIO14（低电平触发）
+
+Hi3861 GPIO11 UART2 TX -> ESP32 GPIO16 RX
+Hi3861 GPIO12 UART2 RX <- ESP32 GPIO17 TX
+Hi3861 GND             <-> ESP32 GND
 ```
 
-出现 `BootromDownloadBoot.` 时短按一次板子的 RST。
-
-烧录前必须填写 `cloud_config.h`。实际配置不要提交到 Git。
+两块板分别 USB 供电时不要连接 5V 到 5V。
