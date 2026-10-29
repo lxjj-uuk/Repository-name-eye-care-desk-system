@@ -18,13 +18,13 @@ python -m venv .venv
 .\.venv\Scripts\activate
 pip install -r requirements.txt
 Copy-Item .env.example .env
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 ```
 
 打开：
 
 ```text
-http://127.0.0.1:8000/docs
+http://127.0.0.1:8080/docs
 ```
 
 默认凭据：
@@ -43,7 +43,7 @@ Bearer Token：dev-token-change-me
 
 ```powershell
 $login = Invoke-RestMethod -Method Post `
-  -Uri http://127.0.0.1:8000/auth/login `
+  -Uri http://127.0.0.1:8080/auth/login `
   -ContentType 'application/json' `
   -Body '{"username":"demo","password":"demo123"}'
 $headers = @{ Authorization = "Bearer $($login.access_token)" }
@@ -53,7 +53,7 @@ $headers = @{ Authorization = "Bearer $($login.access_token)" }
 
 ```powershell
 Invoke-RestMethod -Method Post `
-  -Uri http://127.0.0.1:8000/ingest/telemetry `
+  -Uri http://127.0.0.1:8080/ingest/telemetry `
   -Headers $headers `
   -ContentType 'application/json' `
   -Body '{"lux":120,"temperature":24.5,"humidity":50,"occupied":true,"sit_cont_min":50,"risk":0.5,"risk_level":"medium"}'
@@ -62,14 +62,14 @@ Invoke-RestMethod -Method Post `
 ### 3. 查询最新数据
 
 ```powershell
-Invoke-RestMethod -Uri http://127.0.0.1:8000/devices/hi3861_001/latest -Headers $headers
+Invoke-RestMethod -Uri http://127.0.0.1:8080/devices/hi3861_001/latest -Headers $headers
 ```
 
 ### 4. 创建蜂鸣命令
 
 ```powershell
 $cmd = Invoke-RestMethod -Method Post `
-  -Uri http://127.0.0.1:8000/devices/hi3861_001/commands `
+  -Uri http://127.0.0.1:8080/devices/hi3861_001/commands `
   -Headers $headers `
   -ContentType 'application/json' `
   -Body '{"command_name":"buzz","params":{"pattern":"short"}}'
@@ -79,7 +79,7 @@ $cmd = Invoke-RestMethod -Method Post `
 
 ```powershell
 Invoke-RestMethod -Method Post `
-  -Uri "http://127.0.0.1:8000/commands/$($cmd.id)/confirm" `
+  -Uri "http://127.0.0.1:8080/commands/$($cmd.id)/confirm" `
   -Headers $headers
 ```
 
@@ -89,7 +89,7 @@ Invoke-RestMethod -Method Post `
 
 ```powershell
 $today = Get-Date -Format 'yyyy-MM-dd'
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/devices/hi3861_001/reports/daily?date=$today" -Headers $headers
+Invoke-RestMethod -Uri "http://127.0.0.1:8080/devices/hi3861_001/reports/daily?date=$today" -Headers $headers
 ```
 
 ## API 一览

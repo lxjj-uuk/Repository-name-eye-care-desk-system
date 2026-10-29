@@ -54,19 +54,19 @@ AppConfig.useMockData = false
 默认：
 
 ```text
-http://10.0.2.2:8000
+http://10.0.2.2:8080
 ```
 
 - `10.0.2.2` 是 HarmonyOS 模拟器访问电脑本机的地址。
-- 真机请改成电脑局域网 IP，例如 `http://192.168.1.100:8000`。
+- 真机请改成电脑局域网 IP，例如 `http://192.168.1.100:8080`。
 - 也可以在 App 的“设置”页直接修改后端地址。
-- 后端要用 `--host 0.0.0.0` 启动，并允许 Windows 防火墙放行 8000 端口。
+- 后端要用 `--host 0.0.0.0` 启动，并允许 Windows 防火墙放行 8080 端口。
 
 启动后端：
 
 ```powershell
 cd D:\eye-care\backend
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8080
 ```
 
 默认演示账号：

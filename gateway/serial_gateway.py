@@ -9,7 +9,7 @@ from serial.tools import list_ports
 
 SERIAL_PORT = os.getenv("SERIAL_PORT", "AUTO")
 BAUD_RATE = int(os.getenv("BAUD_RATE", "115200"))
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000").rstrip("/")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8080").rstrip("/")
 API_TOKEN = os.getenv("API_TOKEN", "dev-token-change-me")
 DEMO_USERNAME = os.getenv("DEMO_USERNAME", "demo")
 DEMO_PASSWORD = os.getenv("DEMO_PASSWORD", "demo123")

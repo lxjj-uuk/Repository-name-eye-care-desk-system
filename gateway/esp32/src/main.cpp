@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <ArduinoJson.h>
 #include <BLE2902.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -24,6 +23,7 @@ BLEServer *bleServer = nullptr;
 BLECharacteristic *statusCharacteristic = nullptr;
 bool bleConnected = false;
 bool wifiReady = false;
+bool wifiProvisioningRequested = false;
 uint32_t lastWifiAttemptMs = 0;
 uint32_t lastUploadMs = 0;
 
@@ -32,17 +32,108 @@ String wifiPassword;
 String deviceId;
 String uploadToken;
 
+String jsonEscape(const String &value) {
+  String escaped;
+  escaped.reserve(value.length() + 8);
+  for (size_t i = 0; i < value.length(); i++) {
+    const char character = value.charAt(i);
+    if (character == '"' || character == '\\') {
+      escaped += '\\';
+      escaped += character;
+    } else if (character == '\n') {
+      escaped += "\\n";
+    } else if (character == '\r') {
+      escaped += "\\r";
+    } else {
+      escaped += character;
+    }
+  }
+  return escaped;
+}
+
+bool jsonStringValue(const String &json, const char *key, String &value) {
+  const String marker = String("\"") + key + "\"";
+  const int keyPosition = json.indexOf(marker);
+  if (keyPosition < 0) {
+    return false;
+  }
+  int position = json.indexOf(':', keyPosition + marker.length());
+  if (position < 0) {
+    return false;
+  }
+  position++;
+  while (position < static_cast<int>(json.length()) &&
+         isspace(static_cast<unsigned char>(json.charAt(position)))) {
+    position++;
+  }
+  if (position >= static_cast<int>(json.length()) ||
+      json.charAt(position) != '"') {
+    return false;
+  }
+
+  value = "";
+  position++;
+  while (position < static_cast<int>(json.length())) {
+    char character = json.charAt(position++);
+    if (character == '"') {
+      return true;
+    }
+    if (character == '\\' && position < static_cast<int>(json.length())) {
+      character = json.charAt(position++);
+      if (character == 'n') {
+        value += '\n';
+      } else if (character == 'r') {
+        value += '\r';
+      } else if (character == 't') {
+        value += '\t';
+      } else {
+        value += character;
+      }
+    } else {
+      value += character;
+    }
+  }
+  return false;
+}
+
+bool jsonIntValue(const String &json, const char *key, int &value) {
+  const String marker = String("\"") + key + "\"";
+  const int keyPosition = json.indexOf(marker);
+  if (keyPosition < 0) {
+    return false;
+  }
+  int position = json.indexOf(':', keyPosition + marker.length());
+  if (position < 0) {
+    return false;
+  }
+  position++;
+  while (position < static_cast<int>(json.length()) &&
+         isspace(static_cast<unsigned char>(json.charAt(position)))) {
+    position++;
+  }
+  const int start = position;
+  while (position < static_cast<int>(json.length()) &&
+         (isdigit(static_cast<unsigned char>(json.charAt(position))) ||
+          json.charAt(position) == '-')) {
+    position++;
+  }
+  if (position == start) {
+    return false;
+  }
+  value = json.substring(start, position).toInt();
+  return true;
+}
+
 void notifyStatus(const String &state, const String &detail = "") {
   if (statusCharacteristic == nullptr) {
     return;
   }
-  JsonDocument document;
-  document["state"] = state;
-  document["detail"] = detail;
-  document["device_id"] = deviceId;
-  document["ip"] = WiFi.isConnected() ? WiFi.localIP().toString() : "";
-  String payload;
-  serializeJson(document, payload);
+  const String payload = String("{\"state\":\"") + jsonEscape(state) +
+                         "\",\"detail\":\"" + jsonEscape(detail) +
+                         "\",\"device_id\":\"" + jsonEscape(deviceId) +
+                         "\",\"ip\":\"" +
+                         (WiFi.isConnected() ? WiFi.localIP().toString() : "") +
+                         "\"}";
   statusCharacteristic->setValue(payload.c_str());
   if (bleConnected) {
     statusCharacteristic->notify();
@@ -52,8 +143,15 @@ void notifyStatus(const String &state, const String &detail = "") {
 
 void loadSettings() {
   preferences.begin("eye-care", false);
+#if defined(EYE_CARE_FORCE_DEV_WIFI) && EYE_CARE_FORCE_DEV_WIFI
+  ssid = EYE_CARE_DEV_WIFI_SSID;
+  wifiPassword = EYE_CARE_DEV_WIFI_PASSWORD;
+  preferences.putString("ssid", ssid);
+  preferences.putString("password", wifiPassword);
+#else
   ssid = preferences.getString("ssid", "");
   wifiPassword = preferences.getString("password", "");
+#endif
   deviceId = preferences.getString(
       "device_id", EYE_CARE_DEFAULT_DEVICE_ID);
   uploadToken = preferences.getString(
@@ -84,7 +182,7 @@ bool connectWifi() {
 
   notifyStatus("wifi_connecting", ssid);
   WiFi.mode(WIFI_STA);
-  WiFi.setSleep(false);
+  WiFi.setSleep(true);
   WiFi.begin(ssid.c_str(), wifiPassword.c_str());
 
   const uint32_t started = millis();
@@ -108,11 +206,16 @@ bool postTelemetry(const String &body) {
     return false;
   }
 
-  WiFiClientSecure client;
-  client.setInsecure();
-  HTTPClient http;
   const String endpoint = String(EYE_CARE_CLOUD_URL) + "/ingest/telemetry";
-  if (!http.begin(client, endpoint)) {
+  WiFiClient plainClient;
+  WiFiClientSecure secureClient;
+  WiFiClient *transport = &plainClient;
+  if (endpoint.startsWith("https://")) {
+    secureClient.setInsecure();
+    transport = &secureClient;
+  }
+  HTTPClient http;
+  if (!http.begin(*transport, endpoint)) {
     return false;
   }
   http.setTimeout(10000);
@@ -121,6 +224,11 @@ bool postTelemetry(const String &body) {
 
   const int code = http.POST(body);
   const String response = http.getString();
+  if (code < 0) {
+    Serial.printf("[cloud] error=%d detail=%s endpoint=%s local_ip=%s\n",
+                  code, http.errorToString(code).c_str(), endpoint.c_str(),
+                  WiFi.localIP().toString().c_str());
+  }
   http.end();
   Serial.printf("[cloud] HTTP %d %s\n", code, response.c_str());
   return code >= 200 && code < 300;
@@ -154,65 +262,69 @@ bool postSensorLine(const char *line) {
     risk = occupied != 0 ? 0.2F : 0.1F;
   }
 
-  JsonDocument document;
-  document["device_id"] = deviceId;
-  document["occupied"] = occupied != 0;
-  document["sit_cont_min"] = sitContMin;
-  document["sit_total_min"] = sitTotalMin;
-  document["last_motion_min"] = lastMotionMin;
-  document["risk"] = risk;
-  document["risk_level"] = riskLevel;
+  String body = String("{\"device_id\":\"") + jsonEscape(deviceId) +
+                "\",\"occupied\":" + (occupied != 0 ? "true" : "false") +
+                ",\"sit_cont_min\":" + String(sitContMin) +
+                ",\"sit_total_min\":" + String(sitTotalMin) +
+                ",\"last_motion_min\":" + String(lastMotionMin) +
+                ",\"risk\":" + String(risk, 2) +
+                ",\"risk_level\":\"" + jsonEscape(riskLevel) + "\"";
 
   if (luxStatus == 0) {
-    document["lux"] = static_cast<int>(round(lux));
-    document["light_state"] =
+    const char *lightState =
         lux < 150.0F ? "dark" : lux > 1000.0F ? "too_bright" : "normal";
+    body += ",\"lux\":" + String(static_cast<int>(round(lux)));
+    body += ",\"light_state\":\"" + String(lightState) + "\"";
   }
   if (dhtStatus == 0) {
-    document["temperature"] = temperature;
-    document["humidity"] = humidity;
+    body += ",\"temperature\":" + String(temperature, 1);
+    body += ",\"humidity\":" + String(humidity, 1);
   }
+  body += "}";
 
-  String body;
-  serializeJson(document, body);
   return postTelemetry(body);
 }
 
 class ProvisioningCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *characteristic) override {
-    const String value = characteristic->getValue();
-    JsonDocument document;
-    const DeserializationError error = deserializeJson(document, value);
-    if (error) {
-      notifyStatus("provisioning_error", "invalid_json");
-      return;
-    }
+    const String value = characteristic->getValue().c_str();
 
-    const char *command = document["command"] | "";
-    if (strcmp(command, "buzz") == 0) {
-      const char *pattern = document["pattern"] | "short";
-      const int duration = document["duration_ms"] | 200;
+    String command;
+    if (jsonStringValue(value, "command", command) && command == "buzz") {
+      String pattern = "short";
+      int duration = 200;
+      jsonStringValue(value, "pattern", pattern);
+      jsonIntValue(value, "duration_ms", duration);
       char line[48];
-      snprintf(line, sizeof(line), "BUZZ,%s,%d\n", pattern, duration);
+      snprintf(line, sizeof(line), "BUZZ,%s,%d\n", pattern.c_str(), duration);
       Serial1.print(line);
       notifyStatus("buzzer_command_sent", pattern);
       return;
     }
 
-    const char *newSsid = document["ssid"] | "";
-    const char *newPassword = document["password"] | "";
-    if (strlen(newSsid) == 0) {
+    String newSsid;
+    String newPassword;
+    String newDeviceId;
+    String newUploadToken;
+    if (!jsonStringValue(value, "ssid", newSsid) || newSsid.isEmpty()) {
       notifyStatus("provisioning_error", "ssid_required");
       return;
     }
 
     ssid = newSsid;
+    jsonStringValue(value, "password", newPassword);
     wifiPassword = newPassword;
-    deviceId = document["device_id"] | deviceId;
-    uploadToken = document["upload_token"] | uploadToken;
+    if (jsonStringValue(value, "device_id", newDeviceId) &&
+        !newDeviceId.isEmpty()) {
+      deviceId = newDeviceId;
+    }
+    if (jsonStringValue(value, "upload_token", newUploadToken) &&
+        !newUploadToken.isEmpty()) {
+      uploadToken = newUploadToken;
+    }
     saveSettings();
     notifyStatus("credentials_saved");
-    connectWifi();
+    wifiProvisioningRequested = true;
   }
 };
 
@@ -270,6 +382,11 @@ void setup() {
 }
 
 void loop() {
+  if (wifiProvisioningRequested) {
+    wifiProvisioningRequested = false;
+    connectWifi();
+  }
+
   if (!wifiReady || WiFi.status() != WL_CONNECTED) {
     wifiReady = false;
     const uint32_t now = millis();

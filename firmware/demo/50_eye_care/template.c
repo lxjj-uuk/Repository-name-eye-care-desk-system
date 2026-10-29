@@ -140,6 +140,7 @@ static void eye_care_task(void)
         int last_motion_min;
         float risk;
         const char *risk_level;
+        char sensor_line[192];
 
         handle_bridge_commands();
         lux_ret = bh1750_read_lux(&lux);
@@ -148,10 +149,15 @@ static void eye_care_task(void)
         update_health(occupied, lux, &sit_cont_min, &sit_total_min,
                       &last_motion_min, &risk, &risk_level);
 
-        printf("[eye-care] lux=%7.1f(%d) temp=%5.1f rh=%5.1f(%d) occupied=%d "
-               "sit=%d total=%d last_motion=%d risk=%.2f risk_level=%s\n",
-               lux, lux_ret, temp, humi, dht_ret, occupied, sit_cont_min,
-               sit_total_min, last_motion_min, risk, risk_level);
+        snprintf(sensor_line, sizeof(sensor_line),
+                 "[eye-care] lux=%7.1f(%d) temp=%5.1f rh=%5.1f(%d) "
+                 "occupied=%d sit=%d total=%d last_motion=%d risk=%.2f "
+                 "risk_level=%s\n",
+                 lux, lux_ret, temp, humi, dht_ret, occupied, sit_cont_min,
+                 sit_total_min, last_motion_min, risk, risk_level);
+        printf("%s", sensor_line);
+        (void)hi_uart_write(HI_UART_IDX_2, (hi_u8 *)sensor_line,
+                            (hi_u32)strlen(sensor_line));
 
         if (lux_ret == 0 && lux < LUX_DARK_THRESHOLD) {
             buzzer_beep(120);
