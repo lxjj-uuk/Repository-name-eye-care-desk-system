@@ -1,0 +1,40 @@
+# Eye Care 本地试用包
+
+## 文件
+
+- `eye-care-source.zip`：完整源代码，不含密码、数据库和本地构建产物。
+- `EyeCare-app-signed.hap`：当前开发证书签名的 HarmonyOS App。
+- `esp32-gateway.bin`：ESP32 网关固件。
+- `hi3861-local-sensors.bin`：Hi3861 本地传感器固件。
+
+## 启动本地服务
+
+双击项目根目录的 `start-local.cmd`。
+
+默认地址：
+
+```text
+API 文档：http://127.0.0.1:8080/docs
+模拟器：  http://10.0.2.2:8080
+局域网：  http://<电脑IP>:8080
+```
+
+数据库文件为 `backend/eye_care.db`，重启后数据保留。
+AI 日报在未配置大模型时使用本地规则风险模型。
+
+## 硬件
+
+```text
+Hi3861 IO11 TX  -> ESP32 D25 RX
+Hi3861 IO12 RX  <- ESP32 D26 TX
+Hi3861 GND      <-> ESP32 GND
+```
+
+ESP32 设备名由 MAC 地址生成，当前为 `EyeCare-5B98`。
+
+## 注意
+
+- 当前 HAP 使用开发签名，不能直接用于应用市场上架。
+- HarmonyOS 模拟器不支持蓝牙，BLE 配网必须使用真机或 nRF Connect 验证。
+- ESP32、手机和电脑必须处于允许设备互访的同一局域网。
+- Windows 防火墙策略必须允许 TCP `8080` 的本地子网入站访问。
