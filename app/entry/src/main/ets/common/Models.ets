@@ -63,6 +63,8 @@ export interface CommandInfo {
 
 export interface ReportData {
   source?: string;
+  model?: string;
+  engine?: string;
   generated_at?: string;
   sample_count?: number;
   avg_lux?: number;

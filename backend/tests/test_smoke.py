@@ -14,6 +14,8 @@ os.environ["API_TOKEN"] = "test-token"
 os.environ["DEMO_USERNAME"] = "demo"
 os.environ["DEMO_PASSWORD"] = "demo123"
 os.environ["IOTDA_MOCK"] = "true"
+os.environ["LLM_API_URL"] = ""
+os.environ["LOCAL_LLM_MODEL_PATH"] = "Z:/missing-eye-care-model.gguf"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -87,6 +89,9 @@ def test_full_flow():
         )
         assert report.status_code == 200
         assert "共记录" in report.json()["summary"]
+        report_data = report.json()["data"]
+        assert report_data["occupied_ratio"] == 1.0
+        assert report_data["coverage"]["lux"] == 1.0
 
         ai_report = client.post(
             "/devices/hi3861_001/reports/ai",

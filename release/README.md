@@ -20,7 +20,19 @@ API 文档：http://127.0.0.1:8080/docs
 ```
 
 数据库文件为 `backend/eye_care.db`，重启后数据保留。
-AI 日报在未配置大模型时使用本地规则风险模型。
+
+AI 日报使用本机 `Qwen2.5-1.5B-Instruct`。首次部署运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\download-ai-model.ps1
+backend\.venv\Scripts\python -m pip install -r backend\requirements-ai.txt
+```
+
+模型约 1.1 GB，不包含在源码压缩包中。启动后访问
+`http://127.0.0.1:8080/health`，`ai.local_available` 应为 `true`。
+App 点击“AI 深度分析”时会显示分析进度，完成后显示本地模型、生成时间、
+动态原因分析和行动建议。健康数据会直接由规则模型快速处理，存在真实风险
+时才调用本地大模型。
 
 ## 硬件
 

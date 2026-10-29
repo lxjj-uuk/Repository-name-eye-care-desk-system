@@ -34,7 +34,12 @@ def generate_daily_report(
     temp_values = [row.temperature for row in rows if row.temperature is not None]
     humi_values = [row.humidity for row in rows if row.humidity is not None]
     sit_values = [row.sit_cont_min for row in rows if row.sit_cont_min is not None]
+    sit_total_values = [
+        row.sit_total_min for row in rows if row.sit_total_min is not None
+    ]
     risk_values = [row.risk for row in rows if row.risk is not None]
+    occupied_rows = [row for row in rows if row.occupied is not None]
+    occupied_count = sum(1 for row in occupied_rows if row.occupied)
 
     avg_lux = _avg(lux_values)
     avg_temp = _avg(temp_values)
@@ -46,6 +51,33 @@ def generate_daily_report(
         if lux_values
         else None
     )
+    occupied_lux_values = [
+        row.lux
+        for row in occupied_rows
+        if row.occupied and row.lux is not None
+    ]
+    poor_light_occupied_ratio = (
+        round(
+            sum(1 for value in occupied_lux_values if value < lux_min)
+            / len(occupied_lux_values),
+            3,
+        )
+        if occupied_lux_values
+        else None
+    )
+    occupied_ratio = (
+        round(occupied_count / len(occupied_rows), 3)
+        if occupied_rows
+        else None
+    )
+    high_risk_ratio = (
+        round(sum(1 for value in risk_values if value >= 0.7) / len(risk_values), 3)
+        if risk_values
+        else None
+    )
+    occupied_times = [
+        row.ts for row in occupied_rows if row.occupied and row.ts is not None
+    ]
 
     if max_risk >= 0.7 or max_sit >= 60:
         risk_level = "high"
@@ -59,6 +91,8 @@ def generate_daily_report(
         parts.append(f"平均照度 {avg_lux} lux")
     if poor_light_ratio is not None:
         parts.append(f"偏低光照占比 {round(poor_light_ratio * 100)}%")
+    if poor_light_occupied_ratio is not None:
+        parts.append(f"在座时低照光占比 {round(poor_light_occupied_ratio * 100)}%")
     if max_sit:
         parts.append(f"最长连续久坐 {max_sit} 分钟")
     parts.append(f"最高用眼风险 {max_risk:.2f}")
@@ -72,8 +106,24 @@ def generate_daily_report(
         "avg_temperature": avg_temp,
         "avg_humidity": avg_humi,
         "max_sit_cont_min": max_sit,
+        "max_sit_total_min": max(sit_total_values) if sit_total_values else 0,
         "max_risk": max_risk,
         "poor_light_ratio": poor_light_ratio,
+        "poor_light_occupied_ratio": poor_light_occupied_ratio,
+        "occupied_ratio": occupied_ratio,
+        "high_risk_ratio": high_risk_ratio,
+        "occupied_first_at": (
+            occupied_times[0].isoformat() if occupied_times else None
+        ),
+        "occupied_last_at": (
+            occupied_times[-1].isoformat() if occupied_times else None
+        ),
+        "coverage": {
+            "lux": round(len(lux_values) / len(rows), 3),
+            "temperature": round(len(temp_values) / len(rows), 3),
+            "humidity": round(len(humi_values) / len(rows), 3),
+            "occupied": round(len(occupied_rows) / len(rows), 3),
+        },
         "risk_level": risk_level,
     }
 

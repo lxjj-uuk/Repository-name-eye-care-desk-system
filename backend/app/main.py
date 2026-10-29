@@ -8,6 +8,7 @@ from . import models
 from .config import settings
 from .db import Base, SessionLocal, engine
 from .routers import auth, commands, devices, ingest, reports
+from .services.local_llm import get_model_name, is_available as local_llm_available
 
 
 @asynccontextmanager
@@ -66,4 +67,13 @@ app.include_router(ingest.router)
 
 @app.get("/health", tags=["system"])
 def health():
-    return {"status": "ok", "service": "eye-care-api", "version": "0.1.0"}
+    return {
+        "status": "ok",
+        "service": "eye-care-api",
+        "version": "0.1.0",
+        "ai": {
+            "local_available": local_llm_available(),
+            "local_model": get_model_name() if local_llm_available() else None,
+            "remote_configured": bool(settings.llm_api_url),
+        },
+    }

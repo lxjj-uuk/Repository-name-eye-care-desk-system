@@ -158,4 +158,13 @@ Write-Host "Docs:      http://127.0.0.1:8080/docs"
 Write-Host "LAN:       http://${lanIp}:8080"
 Write-Host "ESP32:     http://${lanIp}:8080"
 Write-Host 'Emulator:  http://10.0.2.2:8080'
+$localModel = Join-Path $projectRoot 'models\qwen2.5-1.5b-instruct-q4_k_m.gguf'
+if (
+    (Test-Path -LiteralPath $localModel) -and
+    ((Get-Item -LiteralPath $localModel).Length -gt 500MB)
+) {
+    Write-Host 'AI:        Local Qwen2.5 1.5B'
+} else {
+    Write-Host 'AI:        Rule fallback (local model not installed)' -ForegroundColor Yellow
+}
 Write-Host ''

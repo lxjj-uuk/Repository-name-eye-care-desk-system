@@ -51,7 +51,7 @@ export class ApiClient {
       method: method,
       header: headers,
       connectTimeout: 15000,
-      readTimeout: 30000
+      readTimeout: 180000
     };
     if (body !== undefined) {
       options.extraData = JSON.stringify(body);

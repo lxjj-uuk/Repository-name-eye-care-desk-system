@@ -37,3 +37,6 @@ out/
 *.rar
 *.tmp
 *.bak
+
+# Local AI model weights
+models/

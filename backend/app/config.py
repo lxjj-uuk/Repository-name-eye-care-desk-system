@@ -66,7 +66,13 @@ class Settings:
     llm_api_url: str = os.getenv("LLM_API_URL", "")
     llm_api_key: str = os.getenv("LLM_API_KEY", "")
     llm_model: str = os.getenv("LLM_MODEL", "")
-    llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", "1"))
+    llm_temperature: float = float(os.getenv("LLM_TEMPERATURE", "0.3"))
+    llm_timeout_s: float = float(os.getenv("LLM_TIMEOUT_S", "120"))
+    llm_max_tokens: int = int(os.getenv("LLM_MAX_TOKENS", "420"))
+    local_llm_model_path: str = os.getenv("LOCAL_LLM_MODEL_PATH", "")
+    local_llm_context: int = int(os.getenv("LOCAL_LLM_CONTEXT", "3072"))
+    local_llm_threads: int = int(os.getenv("LOCAL_LLM_THREADS", "0"))
+    local_llm_gpu_layers: int = int(os.getenv("LOCAL_LLM_GPU_LAYERS", "0"))
 
     @property
     def iotda_configured(self) -> bool:

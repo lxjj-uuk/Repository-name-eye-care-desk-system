@@ -10,6 +10,7 @@ export struct ReportPage {
   @State loading: boolean = false;
   @State message: string = '';
   @State pending: CommandInfo[] = [];
+  @State reportRevision: number = 0;
 
   aboutToAppear(): void {
     this.reportDate = this.today();
@@ -28,6 +29,7 @@ export struct ReportPage {
       return;
     }
     this.loading = true;
+    this.message = '正在读取今日数据...';
     try {
       let loadedReport = await ApiClient.getDailyReport(this.reportDate);
       if (
@@ -37,13 +39,15 @@ export struct ReportPage {
           loadedReport.data.insights.length === 0
         )
       ) {
+        this.message = '首次分析需要加载本地模型，请稍候...';
         loadedReport = await ApiClient.generateAiReport(this.reportDate);
       }
       this.report = loadedReport;
+      this.reportRevision += 1;
       this.error = '';
       this.message = loadedReport.data.source === 'llm'
-        ? 'Kimi AI 分析已更新'
-        : '规则分析已更新';
+        ? `分析已更新：${this.sourceLabel(loadedReport.data.source, loadedReport.data.model, loadedReport.data.engine)}`
+        : '今日数据已载入；点击“AI 深度分析”生成新报告';
     } catch (err) {
       this.report = null;
       this.error = this.errorText(err);
@@ -58,12 +62,20 @@ export struct ReportPage {
       return;
     }
     this.loading = true;
+    this.error = '';
+    this.message = '正在连接本地大模型并分析今日数据，首次加载可能需要约 1 分钟...';
     try {
-      this.report = await ApiClient.generateAiReport(this.reportDate);
+      const analyzedReport = await ApiClient.generateAiReport(this.reportDate);
+      this.report = analyzedReport;
+      this.reportRevision += 1;
       this.error = '';
-      this.message = AppConfig.useMockData
-        ? '演示模式：AI 报告已生成'
-        : 'AI 深度分析完成';
+      if (AppConfig.useMockData) {
+        this.message = '演示模式：AI 报告已生成';
+      } else if (analyzedReport.data.source === 'llm') {
+        this.message = `深度分析完成：${this.sourceLabel(analyzedReport.data.source, analyzedReport.data.model, analyzedReport.data.engine)}`;
+      } else {
+        this.message = '已使用规则+风险模型完成分析';
+      }
       await this.loadPending();
     } catch (err) {
       this.error = this.errorText(err);
@@ -77,13 +89,14 @@ export struct ReportPage {
       return;
     }
     this.loading = true;
+    this.error = '';
+    this.message = '正在重新聚合今日传感器数据...';
     try {
-      const refreshedReport = await ApiClient.generateAiReport(this.reportDate);
+      const refreshedReport = await ApiClient.refreshDailyReport(this.reportDate);
       this.report = refreshedReport;
+      this.reportRevision += 1;
       this.error = '';
-      this.message = refreshedReport.data.source === 'llm'
-        ? '报告数据与 Kimi 分析已刷新'
-        : '报告数据与规则分析已刷新';
+      this.message = '统计数据已刷新；点击“AI 深度分析”生成最新结论';
     } catch (err) {
       this.error = this.errorText(err);
     } finally {
@@ -136,6 +149,33 @@ export struct ReportPage {
       return '中等';
     }
     return '良好';
+  }
+
+  private sourceLabel(source?: string, model?: string, engine?: string): string {
+    if (source === 'llm') {
+      const prefix = engine === 'local'
+        ? '本地大模型'
+        : engine === 'api'
+          ? '云端大模型'
+          : '大模型';
+      return model && model.length > 0 ? `${prefix} ${model}` : prefix;
+    }
+    return '规则+风险模型';
+  }
+
+  private generatedAt(value?: string): string {
+    if (!value || value.length < 16) {
+      return '--';
+    }
+    const parsed = new Date(value.endsWith('Z') ? value : `${value}Z`);
+    if (Number.isNaN(parsed.getTime())) {
+      return value.substring(0, 16).replace('T', ' ');
+    }
+    const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
+    const day = `${parsed.getDate()}`.padStart(2, '0');
+    const hour = `${parsed.getHours()}`.padStart(2, '0');
+    const minute = `${parsed.getMinutes()}`.padStart(2, '0');
+    return `${parsed.getFullYear()}-${month}-${day} ${hour}:${minute}`;
   }
 
   @Builder
@@ -252,14 +292,20 @@ export struct ReportPage {
           .fontWeight(FontWeight.Bold)
           .fontColor('#1B2430')
         Blank()
-        Text('LLM')
+        Text(this.sourceLabel(data.source, data.model, data.engine))
           .fontSize(9)
           .fontColor('#0B6E5A')
           .backgroundColor('#DDF6EF')
           .borderRadius(8)
           .padding({ left: 7, right: 7, top: 3, bottom: 3 })
+          .maxLines(1)
+          .textOverflow({ overflow: TextOverflow.Ellipsis })
       }
       .width('100%')
+
+      Text(`生成时间：${this.generatedAt(data.generated_at)}`)
+        .fontSize(9)
+        .fontColor('#8A94A6')
 
       if (data.insights && data.insights.length > 0) {
         ForEach(data.insights, (insight: AiInsight) => {
@@ -427,8 +473,30 @@ export struct ReportPage {
             .width('100%')
         }
 
+        if (this.loading) {
+          Row({ space: 10 }) {
+            LoadingProgress()
+              .width(16)
+              .height(16)
+              .color('#1EC8A5')
+            Text(this.message)
+              .fontSize(11)
+              .fontColor('#35506A')
+              .lineHeight(18)
+              .layoutWeight(1)
+          }
+          .width('100%')
+          .padding(12)
+          .backgroundColor('#EAF7F4')
+          .borderRadius(12)
+        }
+
         if (this.report && this.report.data) {
-          this.reportBody(this.report, this.report.data)
+          ForEach([this.reportRevision], (revision: number) => {
+            if (this.report && this.report.data) {
+              this.reportBody(this.report, this.report.data)
+            }
+          }, (revision: number) => revision.toString())
         } else if (!this.loading) {
           Text('当天没有数据，或后端未启动')
             .fontSize(13)

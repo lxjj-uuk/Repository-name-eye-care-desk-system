@@ -16,7 +16,7 @@ BH1750 / DHT20 / 人体感应
             |
       SQLite / PostgreSQL
             |
-    规则风险模型 / 可选 LLM
+    本地 Qwen 模型 / 规则风险回退
             |
        HarmonyOS App
 ```
@@ -53,7 +53,18 @@ API：      http://127.0.0.1:8080
 
 - `backend/eye_care.db`：SQLite 持久化数据库
 - `backend/.env`：本机环境配置，不提交到 Git
-- `rule+risk-model`：未配置 LLM 时使用的本地分析模型
+- `models\qwen2.5-1.5b-instruct-q4_k_m.gguf`：本机中文模型
+- `rule+risk-model`：模型不可用时自动回退的规则分析
+
+首次部署 AI 时运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\download-ai-model.ps1
+backend\.venv\Scripts\python -m pip install -r backend\requirements-ai.txt
+```
+
+模型约 1.1 GB，已加入 Git 忽略，不会进入源码包。`/health` 的
+`ai.local_available` 可以确认模型是否就绪。
 
 需要让 ESP32 或局域网手机访问时，先双击：
 
