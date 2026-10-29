@@ -32,6 +32,16 @@ Hi3861 GND      <-> ESP32 GND
 
 ESP32 设备名由 MAC 地址生成，当前为 `EyeCare-5B98`。
 
+推荐使用 Windows 移动热点联调：
+
+```text
+SSID：EyeCare-Local
+密码：EyeCare2026
+频段：2.4 GHz
+```
+
+热点启动后运行 `start-local.cmd`，脚本会使用 `192.168.137.1:8080`。
+
 ## 注意
 
 - 当前 HAP 使用开发签名，不能直接用于应用市场上架。
