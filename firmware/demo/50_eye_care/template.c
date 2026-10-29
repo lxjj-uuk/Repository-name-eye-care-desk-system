@@ -16,11 +16,14 @@
 
 #define TASK_STACK_SIZE        8192
 #define SAMPLE_INTERVAL_S      2
-#define LUX_DARK_THRESHOLD     150.0f
 
 static int g_sit_cont_seconds = 0;
 static int g_sit_total_seconds = 0;
 static int g_seconds_since_motion = 0;
+static float g_lux_min = 150.0f;
+static float g_lux_max = 1000.0f;
+static int g_sit_warn_min = 45;
+static int g_sit_strong_min = 60;
 
 static void bridge_uart_init(void)
 {
@@ -45,7 +48,7 @@ static void bridge_uart_init(void)
 
 static void handle_bridge_commands(void)
 {
-    char buffer[64] = {0};
+    char buffer[96] = {0};
     hi_s32 length = hi_uart_read(HI_UART_IDX_2, (hi_u8 *)buffer,
                                  sizeof(buffer) - 1);
 
@@ -53,19 +56,42 @@ static void handle_bridge_commands(void)
         return;
     }
     buffer[length] = '\0';
-    if (strstr(buffer, "BUZZ,") == NULL) {
+    if (strstr(buffer, "BUZZ,") != NULL) {
+        if (strstr(buffer, "double") != NULL) {
+            buzzer_beep(180);
+            usleep(180 * 1000);
+            buzzer_beep(180);
+        } else if (strstr(buffer, "long") != NULL) {
+            buzzer_beep(1000);
+        } else {
+            buzzer_beep(200);
+        }
+        printf("[eye-care] buzzer command handled\n");
         return;
     }
-    if (strstr(buffer, "double") != NULL) {
-        buzzer_beep(180);
-        usleep(180 * 1000);
-        buzzer_beep(180);
-    } else if (strstr(buffer, "long") != NULL) {
-        buzzer_beep(1000);
-    } else {
-        buzzer_beep(200);
+    if (strncmp(buffer, "THRESH,", 7) == 0) {
+        int lux_min;
+        int lux_max;
+        int sit_warn;
+        int sit_strong;
+        if (sscanf(buffer, "THRESH,%d,%d,%d,%d",
+                   &lux_min, &lux_max, &sit_warn, &sit_strong) == 4 &&
+            lux_min >= 0 && lux_max > lux_min &&
+            sit_warn >= 1 && sit_strong >= sit_warn) {
+            g_lux_min = (float)lux_min;
+            g_lux_max = (float)lux_max;
+            g_sit_warn_min = sit_warn;
+            g_sit_strong_min = sit_strong;
+            printf("[eye-care] thresholds updated\n");
+        }
+        return;
     }
-    printf("[eye-care] UART command handled\n");
+    if (strncmp(buffer, "RESET", 5) == 0) {
+        g_sit_cont_seconds = 0;
+        g_sit_total_seconds = 0;
+        g_seconds_since_motion = 0;
+        printf("[eye-care] sitting counters reset\n");
+    }
 }
 
 static void update_health(int occupied, float lux, int *sit_cont_min,
@@ -88,9 +114,9 @@ static void update_health(int occupied, float lux, int *sit_cont_min,
     *last_motion_min = g_seconds_since_motion / 60;
 
     *risk = 0.1f;
-    if (lux < LUX_DARK_THRESHOLD) {
+    if (lux < g_lux_min) {
         *risk += 0.3f;
-    } else if (lux > 1000.0f) {
+    } else if (lux > g_lux_max) {
         *risk += 0.15f;
     }
     *risk += (float)*sit_cont_min / 150.0f;
@@ -98,9 +124,9 @@ static void update_health(int occupied, float lux, int *sit_cont_min,
         *risk = 0.99f;
     }
 
-    if ((*sit_cont_min >= 60) || (*risk >= 0.7f)) {
+    if ((*sit_cont_min >= g_sit_strong_min) || (*risk >= 0.7f)) {
         *risk_level = "high";
-    } else if ((*sit_cont_min >= 45) || (*risk >= 0.4f)) {
+    } else if ((*sit_cont_min >= g_sit_warn_min) || (*risk >= 0.4f)) {
         *risk_level = "medium";
     } else {
         *risk_level = "low";
@@ -159,7 +185,7 @@ static void eye_care_task(void)
         (void)hi_uart_write(HI_UART_IDX_2, (hi_u8 *)sensor_line,
                             (hi_u32)strlen(sensor_line));
 
-        if (lux_ret == 0 && lux < LUX_DARK_THRESHOLD) {
+        if (lux_ret == 0 && lux < g_lux_min) {
             buzzer_beep(120);
         }
         sleep(SAMPLE_INTERVAL_S);

@@ -15,8 +15,8 @@ namespace {
 constexpr char kServiceUuid[] = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 constexpr char kRxUuid[] = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 constexpr char kStatusUuid[] = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
-constexpr uint32_t kUploadIntervalMs = 5000;
 constexpr uint32_t kWifiRetryMs = 10000;
+constexpr uint32_t kCommandPollMs = 5000;
 
 Preferences preferences;
 BLEServer *bleServer = nullptr;
@@ -26,6 +26,8 @@ bool wifiReady = false;
 bool wifiProvisioningRequested = false;
 uint32_t lastWifiAttemptMs = 0;
 uint32_t lastUploadMs = 0;
+uint32_t lastCommandPollMs = 0;
+uint32_t uploadIntervalMs = 5000;
 
 String ssid;
 String wifiPassword;
@@ -201,12 +203,16 @@ bool connectWifi() {
   return true;
 }
 
-bool postTelemetry(const String &body) {
+bool requestCloud(const char *method,
+                  const String &path,
+                  const String &body,
+                  String &response,
+                  int &statusCode) {
   if (!wifiReady || WiFi.status() != WL_CONNECTED) {
     return false;
   }
 
-  const String endpoint = String(EYE_CARE_CLOUD_URL) + "/ingest/telemetry";
+  const String endpoint = String(EYE_CARE_CLOUD_URL) + path;
   WiFiClient plainClient;
   WiFiClientSecure secureClient;
   WiFiClient *transport = &plainClient;
@@ -219,19 +225,33 @@ bool postTelemetry(const String &body) {
     return false;
   }
   http.setTimeout(10000);
-  http.addHeader("Content-Type", "application/json");
+  if (!body.isEmpty()) {
+    http.addHeader("Content-Type", "application/json");
+  }
   http.addHeader("Authorization", "Bearer " + uploadToken);
 
-  const int code = http.POST(body);
-  const String response = http.getString();
-  if (code < 0) {
+  if (strcmp(method, "GET") == 0) {
+    statusCode = http.GET();
+  } else {
+    statusCode = http.POST(body);
+  }
+  response = http.getString();
+  if (statusCode < 0) {
     Serial.printf("[cloud] error=%d detail=%s endpoint=%s local_ip=%s\n",
-                  code, http.errorToString(code).c_str(), endpoint.c_str(),
+                  statusCode, http.errorToString(statusCode).c_str(),
+                  endpoint.c_str(),
                   WiFi.localIP().toString().c_str());
   }
   http.end();
-  Serial.printf("[cloud] HTTP %d %s\n", code, response.c_str());
-  return code >= 200 && code < 300;
+  Serial.printf("[cloud] %s HTTP %d %s\n", method, statusCode,
+                response.c_str());
+  return statusCode >= 200 && statusCode < 300;
+}
+
+bool postTelemetry(const String &body) {
+  String response;
+  int statusCode = 0;
+  return requestCloud("POST", "/ingest/telemetry", body, response, statusCode);
 }
 
 bool postSensorLine(const char *line) {
@@ -283,6 +303,149 @@ bool postSensorLine(const char *line) {
   body += "}";
 
   return postTelemetry(body);
+}
+
+bool nextJsonObject(const String &json, int &cursor, String &object) {
+  while (cursor < static_cast<int>(json.length())) {
+    const int start = json.indexOf('{', cursor);
+    if (start < 0) {
+      return false;
+    }
+
+    int depth = 0;
+    bool inString = false;
+    bool escaped = false;
+    for (int i = start; i < static_cast<int>(json.length()); i++) {
+      const char character = json.charAt(i);
+      if (inString) {
+        if (escaped) {
+          escaped = false;
+        } else if (character == '\\') {
+          escaped = true;
+        } else if (character == '"') {
+          inString = false;
+        }
+        continue;
+      }
+      if (character == '"') {
+        inString = true;
+      } else if (character == '{') {
+        depth++;
+      } else if (character == '}') {
+        depth--;
+        if (depth == 0) {
+          object = json.substring(start, i + 1);
+          cursor = i + 1;
+          return true;
+        }
+      }
+    }
+    cursor = start + 1;
+  }
+  return false;
+}
+
+bool executeCloudCommand(const String &commandName,
+                         const String &commandJson,
+                         String &message) {
+  if (commandName == "buzz") {
+    String pattern = "short";
+    int duration = 200;
+    jsonStringValue(commandJson, "pattern", pattern);
+    if (!jsonIntValue(commandJson, "duration_ms", duration)) {
+      duration = pattern == "long" ? 1000 : 200;
+    }
+    char line[64];
+    snprintf(line, sizeof(line), "BUZZ,%s,%d\n", pattern.c_str(), duration);
+    Serial1.print(line);
+    message = "buzzer command forwarded";
+    return true;
+  }
+
+  if (commandName == "set_threshold") {
+    int luxMin = 0;
+    int luxMax = 0;
+    int sitWarn = 0;
+    int sitStrong = 0;
+    if (!jsonIntValue(commandJson, "lux_min", luxMin) ||
+        !jsonIntValue(commandJson, "lux_max", luxMax) ||
+        !jsonIntValue(commandJson, "sit_warn_min", sitWarn) ||
+        !jsonIntValue(commandJson, "sit_strong_min", sitStrong)) {
+      message = "threshold values incomplete";
+      return false;
+    }
+    char line[96];
+    snprintf(line, sizeof(line), "THRESH,%d,%d,%d,%d\n",
+             luxMin, luxMax, sitWarn, sitStrong);
+    Serial1.print(line);
+    message = "thresholds forwarded";
+    return true;
+  }
+
+  if (commandName == "set_report_interval") {
+    int seconds = 0;
+    if (!jsonIntValue(commandJson, "seconds", seconds) || seconds < 5) {
+      message = "invalid report interval";
+      return false;
+    }
+    uploadIntervalMs = static_cast<uint32_t>(seconds) * 1000UL;
+    message = "report interval updated";
+    return true;
+  }
+
+  if (commandName == "reset_sitting") {
+    Serial1.print("RESET\n");
+    message = "sitting counter reset";
+    return true;
+  }
+
+  message = "unsupported command";
+  return false;
+}
+
+void acknowledgeCommand(const String &requestId, bool ok,
+                        const String &message) {
+  const String body = String("{\"result_code\":") + (ok ? "0" : "1") +
+                      ",\"result\":{\"message\":\"" + jsonEscape(message) +
+                      "\"}}";
+  String response;
+  int statusCode = 0;
+  requestCloud(
+      "POST", "/ingest/commands/" + requestId + "/ack",
+      body, response, statusCode);
+}
+
+void processCloudCommands(const String &response) {
+  int cursor = 0;
+  String commandJson;
+  while (nextJsonObject(response, cursor, commandJson)) {
+    String status;
+    String requestId;
+    String commandName;
+    if (!jsonStringValue(commandJson, "status", status) ||
+        status != "sent" ||
+        !jsonStringValue(commandJson, "request_id", requestId) ||
+        !jsonStringValue(commandJson, "command_name", commandName)) {
+      continue;
+    }
+
+    String message;
+    const bool ok =
+        executeCloudCommand(commandName, commandJson, message);
+    Serial.printf("[command] %s %s\n", commandName.c_str(),
+                  message.c_str());
+    acknowledgeCommand(requestId, ok, message);
+  }
+}
+
+void pollCloudCommands() {
+  String response;
+  int statusCode = 0;
+  const String path =
+      "/devices/" + deviceId + "/commands?limit=10";
+  if (requestCloud("GET", path, "", response, statusCode)) {
+    processCloudCommands(response);
+  }
 }
 
 class ProvisioningCallbacks : public BLECharacteristicCallbacks {
@@ -373,6 +536,7 @@ void setupBle() {
 void setup() {
   Serial.begin(115200);
   delay(300);
+  Serial1.setRxBufferSize(1024);
   Serial1.begin(115200, SERIAL_8N1, EYE_CARE_UART_RX_PIN,
                 EYE_CARE_UART_TX_PIN);
 
@@ -396,6 +560,14 @@ void loop() {
     }
   }
 
+  if (wifiReady) {
+    const uint32_t now = millis();
+    if (now - lastCommandPollMs >= kCommandPollMs) {
+      lastCommandPollMs = now;
+      pollCloudCommands();
+    }
+  }
+
   static String uartLine;
   while (Serial1.available() > 0) {
     const char character = static_cast<char>(Serial1.read());
@@ -404,7 +576,7 @@ void loop() {
       if (!uartLine.isEmpty()) {
         Serial.printf("[uart] %s\n", uartLine.c_str());
         const uint32_t now = millis();
-        if (now - lastUploadMs >= kUploadIntervalMs &&
+        if (now - lastUploadMs >= uploadIntervalMs &&
             postSensorLine(uartLine.c_str())) {
           lastUploadMs = now;
         }
