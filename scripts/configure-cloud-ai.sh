@@ -31,7 +31,7 @@ updates = {
     "LLM_API_KEY": os.environ["KIMI_API_KEY"],
     "LLM_MODEL": "kimi-k3.1-pro",
     "LLM_MAX_TOKENS": "600",
-    "LLM_TEMPERATURE": "0.35",
+    "LLM_TEMPERATURE": "1",
     "LOCAL_LLM_MODEL_PATH": "",
 }
 
