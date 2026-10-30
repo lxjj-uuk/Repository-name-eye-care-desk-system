@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#082638">
+  <meta name="theme-color" content="#0b2925">
   <title>Eye Care Desk</title>
   <style>
     :root {
@@ -769,6 +769,562 @@
       }
     }
   </style>
+  <style>
+    :root {
+      --ink: #102b28;
+      --ink-soft: #46615b;
+      --paper: #f4f6f1;
+      --mist: #e7eee9;
+      --line: rgba(25, 63, 55, .14);
+      --mint: #72e0bd;
+      --mint-soft: #dff4eb;
+      --amber: #e6b657;
+      --coral: #df746c;
+      --muted: #71827d;
+      --shadow: 0 30px 90px rgba(13, 43, 37, .16);
+    }
+
+    html {
+      background: #dfe9e4;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% -8%, rgba(127, 224, 192, .36), transparent 33rem),
+        radial-gradient(circle at 100% 18%, rgba(230, 182, 87, .14), transparent 26rem),
+        linear-gradient(150deg, #edf4ef 0%, #dfe9e4 52%, #edf1eb 100%);
+    }
+
+    .shell {
+      background: var(--paper);
+      box-shadow: 0 36px 100px rgba(9, 37, 31, .2);
+    }
+
+    .mast {
+      min-height: 318px;
+      padding: max(24px, env(safe-area-inset-top)) 24px 70px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 86% 34%, rgba(114, 224, 189, .22), transparent 25%),
+        radial-gradient(circle at 12% 100%, rgba(230, 182, 87, .12), transparent 34%),
+        linear-gradient(145deg, #0b2925 0%, #113b34 58%, #173c37 100%);
+      border-radius: 0 0 38px 38px;
+      isolation: isolate;
+      transition:
+        min-height .42s cubic-bezier(.2, .78, .2, 1),
+        padding .42s cubic-bezier(.2, .78, .2, 1),
+        border-radius .42s cubic-bezier(.2, .78, .2, 1);
+    }
+
+    .mast > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .mast::before {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      width: 360px;
+      height: 360px;
+      right: -188px;
+      top: -176px;
+      border-radius: 50%;
+      border: 1px solid rgba(201, 255, 237, .25);
+      box-shadow:
+        0 0 0 54px rgba(124, 224, 192, .035),
+        0 0 0 108px rgba(124, 224, 192, .025);
+    }
+
+    .mast::after {
+      width: 340px;
+      height: 170px;
+      right: -126px;
+      bottom: -102px;
+      border-color: rgba(230, 182, 87, .22);
+      box-shadow: 0 -24px 80px rgba(230, 182, 87, .05) inset;
+    }
+
+    .topline {
+      color: #b4cec5;
+      font-size: 10px;
+      letter-spacing: .06em;
+    }
+
+    .status {
+      padding: 7px 10px;
+      border: 1px solid rgba(226, 255, 245, .14);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .055);
+      backdrop-filter: blur(10px);
+      color: #ebfff8;
+      font-size: 10px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      box-shadow: 0 0 0 4px rgba(114, 224, 189, .11), 0 0 18px rgba(114, 224, 189, .6);
+      animation: statusPulse 3.4s ease-in-out infinite;
+    }
+
+    @keyframes statusPulse {
+      50% { opacity: .58; transform: scale(.82); }
+    }
+
+    h1 {
+      margin: 34px 0 12px;
+      max-width: 7.5em;
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: clamp(39px, 10.8vw, 54px);
+      font-weight: 600;
+      line-height: 1.17;
+      letter-spacing: -.055em;
+      transition: opacity .2s ease, transform .32s ease;
+    }
+
+    .mast p {
+      max-width: 29em;
+      color: #b9cec7;
+      font-size: 12px;
+      line-height: 1.85;
+      transition: opacity .2s ease, transform .32s ease;
+    }
+
+    main {
+      margin-top: -26px;
+      padding-inline: 18px;
+      transition: margin-top .42s cubic-bezier(.2, .78, .2, 1);
+    }
+
+    .view-head {
+      position: relative;
+      z-index: 3;
+      align-items: center;
+      margin: 0 4px 14px;
+      color: var(--ink);
+    }
+
+    #view-live .view-head {
+      color: #eefbf6;
+    }
+
+    .view-title {
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 25px;
+      font-weight: 600;
+    }
+
+    .view-note {
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    #view-live .view-note {
+      color: rgba(226, 244, 237, .66);
+    }
+
+    body[data-tab]:not([data-tab="live"]) .mast {
+      min-height: 124px;
+      padding-bottom: 28px;
+      border-radius: 0 0 28px 28px;
+    }
+
+    body[data-tab]:not([data-tab="live"]) .mast h1,
+    body[data-tab]:not([data-tab="live"]) .mast p {
+      max-height: 0;
+      margin: 0;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+    }
+
+    body[data-tab]:not([data-tab="live"]) main {
+      margin-top: 0;
+      padding-top: 27px;
+    }
+
+    body[data-tab]:not([data-tab="live"]) .mast::before {
+      right: -230px;
+      top: -238px;
+    }
+
+    body[data-tab]:not([data-tab="live"]) .view-head {
+      margin-bottom: 18px;
+    }
+
+    .live-panel {
+      grid-template-columns: 142px 1fr;
+      gap: 20px;
+      min-height: 210px;
+      padding: 24px 20px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 34px 34px 34px 7px;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(114, 224, 189, .14), transparent 34%),
+        linear-gradient(145deg, #113a34 0%, #0e302b 62%, #15332e 100%);
+      box-shadow: 0 22px 50px rgba(9, 37, 31, .22);
+      overflow: hidden;
+    }
+
+    .live-panel::after {
+      content: "";
+      position: absolute;
+      width: 190px;
+      height: 190px;
+      right: -120px;
+      bottom: -120px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 50%;
+    }
+
+    .gauge {
+      width: 132px;
+      filter: drop-shadow(0 8px 22px rgba(0, 0, 0, .2));
+    }
+
+    .gauge-track { stroke: rgba(255, 255, 255, .075); }
+
+    .gauge-value {
+      filter: drop-shadow(0 0 7px rgba(230, 182, 87, .34));
+      transition: stroke-dashoffset .75s cubic-bezier(.2, .8, .2, 1), stroke .4s ease;
+    }
+
+    .gauge-number {
+      font-size: 42px;
+      color: #fbfdf8;
+    }
+
+    .gauge-label,
+    .live-copy .eyebrow {
+      color: #8eb1a7;
+    }
+
+    .risk-title {
+      margin: 8px 0 10px;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 25px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .risk-copy {
+      color: #b9cec7;
+      font-size: 11px;
+      line-height: 1.8;
+    }
+
+    .metrics {
+      gap: 9px;
+      margin-top: 11px;
+      background: transparent;
+      border: 0;
+    }
+
+    .metric {
+      position: relative;
+      min-height: 104px;
+      padding: 16px 13px 13px;
+      border: 1px solid rgba(35, 72, 62, .08);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 8px 24px rgba(20, 50, 43, .055);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .metric::after {
+      content: "";
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      right: -26px;
+      bottom: -24px;
+      background: var(--mint-soft);
+    }
+
+    .metric:nth-child(2)::after { background: #f8ead2; }
+    .metric:nth-child(3)::after { background: #dfeaf2; }
+
+    .metric-label {
+      color: #7b8e87;
+      font-size: 10px;
+    }
+
+    .metric-value {
+      margin-top: 16px;
+      color: #17352f;
+      font-size: 27px;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-top: 31px;
+    }
+
+    .section-title {
+      color: #233e37;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .section-note {
+      color: #80918a;
+    }
+
+    .trajectory {
+      padding: 18px 16px 11px;
+      border: 1px solid rgba(32, 69, 59, .08);
+      border-left: 0;
+      border-radius: 22px;
+      background:
+        linear-gradient(rgba(255,255,255,.56), rgba(255,255,255,.56)),
+        radial-gradient(circle at 10% 20%, #d3eee3, transparent 55%);
+      box-shadow: 0 10px 28px rgba(23, 55, 47, .055);
+    }
+
+    .trajectory .line {
+      stroke: #225b4c;
+      stroke-width: 2;
+      filter: drop-shadow(0 3px 5px rgba(34, 91, 76, .18));
+    }
+
+    .trajectory .grid {
+      stroke: rgba(56, 95, 85, .16);
+    }
+
+    .presence-row {
+      gap: 10px;
+      padding-top: 18px;
+    }
+
+    .presence-item {
+      min-height: 72px;
+      padding: 10px 12px;
+      border: 1px solid rgba(33, 71, 61, .08);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .6);
+    }
+
+    .presence-icon {
+      width: 36px;
+      height: 36px;
+      color: #297867;
+      background: linear-gradient(145deg, #e4f7ef, #cdeee2);
+    }
+
+    .report-sheet {
+      padding: 25px 20px 20px;
+      border: 1px solid rgba(31, 67, 58, .08);
+      border-top: 0;
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 100% 0, rgba(230, 182, 87, .1), transparent 25%),
+        #fffefb;
+      box-shadow: 0 24px 60px rgba(20, 48, 41, .09);
+      overflow: hidden;
+    }
+
+    .report-sheet::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #1e6656, #72e0bd 58%, #e6b657);
+    }
+
+    .report-title {
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 23px;
+      font-weight: 600;
+    }
+
+    .source-tag {
+      padding: 6px 9px;
+      border: 1px solid rgba(14, 125, 99, .14);
+      border-radius: 999px;
+      background: #e7f7f0;
+      max-width: 52%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .summary {
+      color: #39534c;
+      font-size: 14px;
+      line-height: 1.9;
+    }
+
+    .insight {
+      padding: 13px 14px;
+      border: 1px solid rgba(32, 70, 60, .08);
+      border-left: 2px solid var(--amber);
+      border-radius: 0 14px 14px 0;
+      background: rgba(250, 248, 241, .72);
+    }
+
+    .recommendations li {
+      border: 1px solid rgba(15, 125, 99, .08);
+      border-radius: 13px;
+      background: linear-gradient(120deg, #e7f7f0, #eff9f5);
+    }
+
+    .analyze-button,
+    .action-button {
+      height: 50px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #123d35, #0b2925);
+      box-shadow: 0 9px 20px rgba(12, 48, 40, .18);
+      transition: transform .16s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+
+    .analyze-button:active,
+    .action-button:active {
+      transform: translateY(1px) scale(.988);
+      box-shadow: 0 4px 10px rgba(12, 48, 40, .14);
+    }
+
+    .secondary-button {
+      height: 50px;
+      border: 1px solid rgba(24, 65, 55, .14);
+      border-radius: 15px;
+      background: rgba(255, 255, 255, .72);
+      transition: background .18s ease, transform .16s ease;
+    }
+
+    .secondary-button:active {
+      transform: translateY(1px) scale(.988);
+      background: #edf3ef;
+    }
+
+    .tab-view:not([hidden]) {
+      animation: viewReveal .38s cubic-bezier(.2, .75, .2, 1) both;
+    }
+
+    @keyframes viewReveal {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tabbar {
+      width: min(calc(100% - 24px), 536px);
+      padding: 7px;
+      border: 1px solid rgba(25, 63, 55, .11);
+      border-radius: 23px;
+      background: rgba(249, 251, 247, .9);
+      box-shadow: 0 16px 44px rgba(10, 41, 34, .18);
+      backdrop-filter: blur(18px) saturate(145%);
+    }
+
+    .tab-button {
+      min-height: 54px;
+      border-radius: 17px;
+      gap: 4px;
+      color: #7b8d87;
+      transition: color .2s ease, background .2s ease, transform .16s ease;
+    }
+
+    .tab-button:active { transform: scale(.96); }
+
+    .tab-button.active {
+      color: #f3fff9;
+      background: #102f29;
+      box-shadow: 0 7px 18px rgba(10, 42, 35, .18);
+    }
+
+    .tab-button.active svg { stroke: #72e0bd; }
+
+    .success-banner {
+      border: 1px solid rgba(18, 130, 103, .14);
+      border-radius: 17px;
+      box-shadow: 0 10px 25px rgba(15, 109, 87, .07);
+    }
+
+    .settings-group {
+      border-top-color: rgba(25, 63, 55, .09);
+    }
+
+    .settings-heading {
+      color: #233e37;
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .field input {
+      height: 48px;
+      border-color: rgba(31, 70, 60, .1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, .72);
+      box-shadow: 0 5px 16px rgba(20, 50, 42, .035) inset;
+    }
+
+    .network-result {
+      border: 1px solid rgba(15, 125, 99, .08);
+      border-left: 3px solid #0b9f82;
+      border-radius: 16px;
+    }
+
+    .history-list {
+      border-top: 0;
+      border-radius: 22px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, .55);
+      max-height: min(56vh, 540px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(31, 70, 60, .22) transparent;
+    }
+
+    .history-row {
+      min-height: 72px;
+      padding: 0 12px;
+      border-bottom-color: rgba(25, 63, 55, .08);
+    }
+
+    .history-row:last-child { border-bottom: 0; }
+
+    .history-list::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .history-list::-webkit-scrollbar-thumb {
+      border-radius: 99px;
+      background: rgba(31, 70, 60, .22);
+    }
+
+    @media (max-width: 390px) {
+      .mast { min-height: 292px; padding-inline: 20px; }
+      body[data-tab]:not([data-tab="live"]) .mast { min-height: 120px; }
+      h1 { font-size: 38px; }
+      .live-panel { grid-template-columns: 116px 1fr; gap: 14px; padding: 20px 16px; }
+      .gauge { width: 112px; }
+      .risk-title { font-size: 22px; }
+      .metrics { gap: 7px; }
+      .metric { padding: 14px 10px; min-height: 96px; }
+      .metric-value { font-size: 23px; }
+      .presence-item { padding-inline: 9px; }
+      .history-list { max-height: min(54vh, 500px); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="shell">
@@ -780,8 +1336,8 @@
           <span id="status-text">连接中</span>
         </span>
       </div>
-      <h1>工位状态，<br>现在就能看见</h1>
-      <p>光照、久坐与桌面环境持续汇入云端。数据每 5 秒更新，AI 研判按需生成。</p>
+      <h1>把每一次专注，<br>留在舒适的光里</h1>
+      <p>工位里的光照、人体与久坐变化持续汇入云端。无需操作，也能看见环境如何影响专注。</p>
     </header>
 
     <main>
@@ -892,10 +1448,14 @@
       </section>
 
       <section id="view-report" class="tab-view" aria-labelledby="report-title" hidden>
+      <div class="view-head">
+        <h2 class="view-title">今日研判</h2>
+        <span class="view-note">AI 环境分析</span>
+      </div>
       <section class="section report-sheet">
         <div class="report-head">
           <div>
-            <h2 id="report-title" class="report-title">今日研判</h2>
+            <h2 id="report-title" class="report-title">工位观察笔记</h2>
             <div id="report-meta" class="report-meta">等待云端日报</div>
           </div>
           <span id="source-tag" class="source-tag">尚未生成</span>
@@ -1299,6 +1859,7 @@
     function activateTab(name) {
       const allowed = ["live", "history", "settings", "report"];
       const selected = allowed.includes(name) ? name : "live";
+      document.body.dataset.tab = selected;
       document.querySelectorAll(".tab-view").forEach((view) => {
         view.hidden = view.id !== `view-${selected}`;
       });
