@@ -23,7 +23,13 @@ actions = APIRouter(
     dependencies=[Depends(require_token)],
 )
 
-ALLOWED_COMMANDS = {"buzz", "set_threshold", "set_report_interval", "reset_sitting"}
+ALLOWED_COMMANDS = {
+    "buzz",
+    "set_threshold",
+    "set_report_interval",
+    "reset_sitting",
+    "wifi_setup",
+}
 
 
 def _as_int(name: str, value):
@@ -90,7 +96,10 @@ def _validate_command(command_name: str, params: dict) -> None:
         return
 
     if params:
-        raise HTTPException(status_code=400, detail="reset_sitting takes no params")
+        raise HTTPException(
+            status_code=400,
+            detail=f"{command_name} takes no params",
+        )
 
 
 @router.post("/{device_id}/commands", response_model=CommandOut)

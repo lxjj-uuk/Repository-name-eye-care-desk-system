@@ -879,6 +879,10 @@
           <p class="settings-hint">
             Safari 不支持 Web Bluetooth，因此此网页不提供浏览器内 BLE 配网。
           </p>
+          <button id="start-wifi-setup" class="action-button" type="button" style="width: 100%;">
+            开启配网热点
+          </button>
+          <p id="network-message" class="settings-hint" role="status" aria-live="polite"></p>
         </div>
       </section>
 
@@ -1305,6 +1309,15 @@
         { seconds },
         "device-message",
         "上传间隔已由设备确认更新。"
+      );
+    });
+    $("start-wifi-setup").addEventListener("click", () => {
+      commandAction(
+        $("start-wifi-setup"),
+        "wifi_setup",
+        {},
+        "network-message",
+        "配网热点已开启：连接 EyeCare-Setup，密码 EyeCare2026，然后打开 192.168.4.1。"
       );
     });
     document.querySelectorAll(".tab-button").forEach((button) => {
