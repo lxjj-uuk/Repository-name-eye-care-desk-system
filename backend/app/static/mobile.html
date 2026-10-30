@@ -113,8 +113,8 @@
 
     main {
       position: relative;
-      margin-top: -34px;
-      padding: 0 16px calc(34px + env(safe-area-inset-bottom));
+      margin-top: 0;
+      padding: 0 16px calc(92px + env(safe-area-inset-bottom));
     }
 
     .live-panel {
@@ -456,6 +456,216 @@
       line-height: 1.6;
     }
 
+    .tab-view[hidden] { display: none; }
+
+    .view-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 4px 0 16px;
+    }
+
+    .view-title {
+      margin: 0;
+      font-size: 27px;
+      line-height: 1.1;
+      letter-spacing: -.035em;
+    }
+
+    .view-note {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+      text-align: right;
+    }
+
+    .history-list {
+      border-top: 1px solid var(--line);
+    }
+
+    .history-row {
+      display: grid;
+      grid-template-columns: 74px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 66px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .history-time {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .history-main {
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .history-meta {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .history-risk {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--mint);
+    }
+
+    .history-risk[data-level="medium"] { background: var(--amber); }
+    .history-risk[data-level="high"] { background: var(--coral); }
+
+    .settings-group {
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .settings-group:last-child { padding-bottom: 0; }
+
+    .settings-heading {
+      margin: 0 0 14px;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .field input {
+      width: 100%;
+      height: 44px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 0;
+      color: var(--ink);
+      background: #fff;
+      font: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .field input:focus {
+      outline: 2px solid var(--mint);
+      outline-offset: 1px;
+    }
+
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .action-button,
+    .secondary-button {
+      min-height: 44px;
+      border: 1px solid var(--ink);
+      border-radius: 0;
+      background: var(--ink);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .secondary-button {
+      border-color: var(--line);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .action-button:disabled,
+    .secondary-button:disabled {
+      opacity: .48;
+    }
+
+    .settings-hint {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.75;
+    }
+
+    .network-state {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 12px 0;
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+
+    .network-badge {
+      padding: 4px 7px;
+      color: #0b6e5a;
+      background: var(--mint-soft);
+      font-size: 9px;
+    }
+
+    .tabbar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      width: min(100%, 560px);
+      padding: 6px 8px calc(7px + env(safe-area-inset-bottom));
+      background: rgba(247, 250, 248, .96);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(14px);
+    }
+
+    .tab-button {
+      display: grid;
+      justify-items: center;
+      gap: 3px;
+      min-height: 48px;
+      border: 0;
+      background: transparent;
+      color: #7b8f96;
+      font-size: 10px;
+    }
+
+    .tab-button svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .tab-button.active {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .tab-button.active svg { stroke: #0b9f82; }
+
+    .tab-button:focus-visible {
+      outline: 2px solid var(--amber);
+      outline-offset: -3px;
+    }
+
     @media (max-width: 390px) {
       .live-panel { grid-template-columns: 112px 1fr; padding: 18px 16px; }
       .gauge { width: 108px; }
@@ -492,6 +702,11 @@
     </header>
 
     <main>
+      <section id="view-live" class="tab-view active" aria-label="实时">
+        <div class="view-head">
+          <h2 class="view-title">实时状态</h2>
+          <span class="view-note">每 5 秒同步云端</span>
+        </div>
       <section class="live-panel" aria-label="实时用眼风险">
         <div class="gauge">
           <svg viewBox="0 0 120 120" aria-hidden="true">
@@ -575,8 +790,19 @@
           </div>
         </div>
       </section>
+      </section>
 
-      <section class="section report-sheet" aria-labelledby="report-title">
+      <section id="view-history" class="tab-view" aria-label="历史" hidden>
+        <div class="view-head">
+          <h2 class="view-title">最近记录</h2>
+          <span id="history-count" class="view-note">等待同步</span>
+        </div>
+        <div class="history-list" id="history-list"></div>
+        <p id="history-empty" class="empty">设备上传数据后，这里会显示最近的采样记录。</p>
+      </section>
+
+      <section id="view-report" class="tab-view" aria-labelledby="report-title" hidden>
+      <section class="section report-sheet">
         <div class="report-head">
           <div>
             <h2 id="report-title" class="report-title">今日研判</h2>
@@ -590,12 +816,95 @@
         <button id="analyze" class="analyze-button" type="button">生成今日研判</button>
         <div id="message" class="message" role="status" aria-live="polite"></div>
       </section>
+      </section>
+
+      <section id="view-settings" class="tab-view" aria-label="设置" hidden>
+        <div class="view-head">
+          <h2 class="view-title">工位设置</h2>
+          <span class="view-note">云端配置</span>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-heading">提醒阈值</h3>
+          <div class="field-grid">
+            <div class="field">
+              <label for="lux-min">最低照度 lux</label>
+              <input id="lux-min" inputmode="numeric" type="number" min="0" max="200000">
+            </div>
+            <div class="field">
+              <label for="lux-max">最高照度 lux</label>
+              <input id="lux-max" inputmode="numeric" type="number" min="0" max="200000">
+            </div>
+            <div class="field">
+              <label for="sit-warn">久坐提醒分钟</label>
+              <input id="sit-warn" inputmode="numeric" type="number" min="1" max="240">
+            </div>
+            <div class="field">
+              <label for="sit-strong">强提醒分钟</label>
+              <input id="sit-strong" inputmode="numeric" type="number" min="1" max="240">
+            </div>
+          </div>
+          <div class="action-row">
+            <button id="save-thresholds" class="action-button" type="button">保存并下发</button>
+            <button id="reload-settings" class="secondary-button" type="button">重新读取</button>
+          </div>
+          <p id="settings-message" class="settings-hint" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-heading">设备操作</h3>
+          <div class="action-row">
+            <button id="test-buzzer" class="action-button" type="button">测试蜂鸣器</button>
+            <button id="reset-sitting" class="secondary-button" type="button">重置久坐</button>
+          </div>
+          <div class="field" style="margin-top: 14px; max-width: 180px;">
+            <label for="report-interval">上传间隔 秒</label>
+            <input id="report-interval" inputmode="numeric" type="number" min="5" max="3600" value="5">
+          </div>
+          <button id="save-interval" class="secondary-button" type="button" style="margin-top: 10px; width: 100%;">更新上传间隔</button>
+          <p id="device-message" class="settings-hint" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-heading">网络与配网</h3>
+          <div class="network-state">
+            <span class="network-badge">自动重连</span>
+            <span id="network-copy">ESP32 会记住上次成功连接的 2.4 GHz Wi-Fi。</span>
+          </div>
+          <p class="settings-hint">
+            首次使用或更换热点时，在 iPhone 的 nRF Connect 中连接
+            <strong>EyeCare-5B98</strong>，向 UART RX 写入 SSID 和密码。配网成功后，
+            日常断电重启不会再次用到 nRF Connect。
+          </p>
+          <p class="settings-hint">
+            Safari 不支持 Web Bluetooth，因此此网页不提供浏览器内 BLE 配网。
+          </p>
+        </div>
+      </section>
 
       <footer class="footer">
         <span>EYE CARE DESK · 云端实时监测</span>
         <span id="footer-time">--</span>
       </footer>
     </main>
+    <nav class="tabbar" aria-label="页面导航">
+      <button class="tab-button active" type="button" data-tab="live" aria-current="page">
+        <svg viewBox="0 0 24 24"><path d="M4 13h4l2-7 4 14 2-7h4"></path></svg>
+        <span>实时</span>
+      </button>
+      <button class="tab-button" type="button" data-tab="history">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"></path></svg>
+        <span>历史</span>
+      </button>
+      <button class="tab-button" type="button" data-tab="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L14.5 3h-4l-.3 2.6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4L6 11a7 7 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.3 2.6h4l.3-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5a7 7 0 0 0 .1-1Z"></path></svg>
+        <span>设置</span>
+      </button>
+      <button class="tab-button" type="button" data-tab="report">
+        <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v5h4M9 12h7M9 16h7"></path></svg>
+        <span>报告</span>
+      </button>
+    </nav>
   </div>
 
   <script>
@@ -605,6 +914,8 @@
     let token = "";
     let analyzeStarted = 0;
     let analyzeTimer = null;
+    let historyItems = [];
+    let currentConfig = null;
 
     const $ = (id) => document.getElementById(id);
 
@@ -641,7 +952,8 @@
     async function api(path, options = {}) {
       const headers = Object.assign({
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        "Authorization": `Bearer ${token}`,
+        "Cache-Control": "no-cache"
       }, options.headers || {});
       const response = await fetch(`${API}${path}`, Object.assign({}, options, { headers }));
       if (!response.ok) {
@@ -682,6 +994,12 @@
       $("sitting").textContent = `${telemetry.sit_cont_min || 0} 分钟`;
       $("updated-at").textContent = `更新 ${timeText(telemetry.ts)}`;
       $("footer-time").textContent = `同步 ${new Date().toLocaleTimeString("zh-CN", { hour12: false })}`;
+      const parsed = parseTimestamp(telemetry.ts);
+      const ageSeconds = parsed ? (Date.now() - parsed.getTime()) / 1000 : Infinity;
+      setStatus(ageSeconds < 30, ageSeconds < 30 ? "设备在线" : "等待设备");
+      $("network-copy").textContent = ageSeconds < 30
+        ? `设备最近一次上传 ${timeText(telemetry.ts)}，当前连接正常。`
+        : `最后上传 ${timeText(telemetry.ts)}，请检查 ESP32 的 2.4 GHz Wi-Fi。`;
     }
 
     function renderChart(items) {
@@ -704,6 +1022,163 @@
       const line = coords.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
       $("lux-line").setAttribute("d", line);
       $("lux-area").setAttribute("d", `${line} L360,101 L0,101 Z`);
+    }
+
+    function renderHistory(items) {
+      historyItems = items.slice();
+      const list = $("history-list");
+      list.replaceChildren();
+      const recent = items.slice().reverse().slice(0, 100);
+      $("history-count").textContent = `${items.length} 条采样`;
+      $("history-empty").hidden = recent.length > 0;
+      recent.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "history-row";
+
+        const time = document.createElement("div");
+        time.className = "history-time";
+        time.textContent = timeText(item.ts);
+
+        const main = document.createElement("div");
+        const reading = document.createElement("div");
+        reading.className = "history-main";
+        reading.textContent = `${Number.isFinite(item.lux) ? item.lux : "--"} lux · ${Number.isFinite(item.temperature) ? item.temperature.toFixed(1) : "--"}°C · ${Number.isFinite(item.humidity) ? item.humidity.toFixed(1) : "--"}%`;
+        const meta = document.createElement("div");
+        meta.className = "history-meta";
+        meta.textContent = `${item.occupied ? "有人" : "无人"} · 久坐 ${item.sit_cont_min || 0} 分钟`;
+        main.append(reading, meta);
+
+        const risk = document.createElement("span");
+        risk.className = "history-risk";
+        risk.dataset.level = item.risk_level || "low";
+        risk.title = `风险 ${Math.round(Number(item.risk || 0) * 100)}`;
+        row.append(time, main, risk);
+        list.append(row);
+      });
+    }
+
+    function fillSettings(config) {
+      currentConfig = config;
+      $("lux-min").value = config.lux_min;
+      $("lux-max").value = config.lux_max;
+      $("sit-warn").value = config.sit_warn_min;
+      $("sit-strong").value = config.sit_strong_min;
+    }
+
+    async function loadSettings() {
+      try {
+        if (!token) await login();
+        fillSettings(await api(`/devices/${DEVICE_ID}/thresholds`));
+        $("network-copy").textContent = "ESP32 会记住上次成功连接的 2.4 GHz Wi-Fi。";
+      } catch (error) {
+        $("settings-message").textContent = "无法读取云端设置。";
+      }
+    }
+
+    function setButtonBusy(button, busy, label) {
+      if (busy) {
+        button.dataset.previousLabel = button.textContent;
+        button.textContent = label || "处理中…";
+        button.disabled = true;
+      } else {
+        button.textContent = button.dataset.previousLabel || button.textContent;
+        button.disabled = false;
+      }
+    }
+
+    async function waitForCommand(command) {
+      let current = command;
+      for (let attempt = 0; attempt < 15; attempt += 1) {
+        if (["acked", "failed", "cancelled"].includes(current.status)) break;
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        current = await api(`/commands/${current.id}`);
+      }
+      return current;
+    }
+
+    async function runCommand(name, params) {
+      if (!token) await login();
+      const created = await api(`/devices/${DEVICE_ID}/commands`, {
+        method: "POST",
+        body: JSON.stringify({ command_name: name, params })
+      });
+      await api(`/commands/${created.id}/confirm`, { method: "POST" });
+      return waitForCommand(created);
+    }
+
+    async function saveThresholds() {
+      const button = $("save-thresholds");
+      const message = $("settings-message");
+      const update = {
+        lux_min: Number($("lux-min").value),
+        lux_max: Number($("lux-max").value),
+        sit_warn_min: Number($("sit-warn").value),
+        sit_strong_min: Number($("sit-strong").value)
+      };
+      if (Object.values(update).some((value) => !Number.isFinite(value))) {
+        message.textContent = "请填写完整数字。";
+        return;
+      }
+      if (update.lux_min >= update.lux_max || update.sit_warn_min >= update.sit_strong_min) {
+        message.textContent = "阈值顺序不正确，请检查照明和久坐区间的上下限。";
+        return;
+      }
+      setButtonBusy(button, true, "正在下发…");
+      try {
+        fillSettings(await api(`/devices/${DEVICE_ID}/thresholds`, {
+          method: "PUT",
+          body: JSON.stringify(update)
+        }));
+        const commands = await api(`/devices/${DEVICE_ID}/commands?limit=10`);
+        const pending = commands.find((item) =>
+          item.status === "pending" && item.command_name === "set_threshold"
+        );
+        if (!pending) throw new Error("pending command missing");
+        await api(`/commands/${pending.id}/confirm`, { method: "POST" });
+        const result = await waitForCommand(pending);
+        message.textContent = result.status === "acked"
+          ? "新阈值已下发并由设备确认。"
+          : `阈值已发送，当前状态：${result.status}`;
+      } catch (error) {
+        message.textContent = "阈值保存或下发失败，请稍后重试。";
+      } finally {
+        setButtonBusy(button, false);
+      }
+    }
+
+    async function commandAction(button, name, params, targetId, successText) {
+      const target = $(targetId);
+      setButtonBusy(button, true);
+      target.textContent = "正在发送设备指令…";
+      try {
+        const result = await runCommand(name, params);
+        target.textContent = result.status === "acked"
+          ? successText
+          : `指令已发送，当前状态：${result.status}`;
+      } catch (error) {
+        target.textContent = "设备指令发送失败。";
+      } finally {
+        setButtonBusy(button, false);
+      }
+    }
+
+    function activateTab(name) {
+      const allowed = ["live", "history", "settings", "report"];
+      const selected = allowed.includes(name) ? name : "live";
+      document.querySelectorAll(".tab-view").forEach((view) => {
+        view.hidden = view.id !== `view-${selected}`;
+      });
+      document.querySelectorAll(".tab-button").forEach((button) => {
+        const active = button.dataset.tab === selected;
+        button.classList.toggle("active", active);
+        if (active) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      history.replaceState(null, "", `#${selected}`);
+      window.scrollTo({ top: 0, behavior: "auto" });
+      if (selected === "history") renderHistory(historyItems);
+      if (selected === "settings") loadSettings();
+      if (selected === "report") loadReport();
     }
 
     function clearReportExtras() {
@@ -754,9 +1229,9 @@
         ]);
         renderLatest(latest);
         renderChart(history.items || []);
-        setStatus(true, "云端在线");
+        renderHistory(history.items || []);
       } catch (error) {
-        setStatus(false, "连接中断");
+        setStatus(false, "云端断开");
         $("message").textContent = "暂时无法连接云端，正在自动重试。";
       }
     }
@@ -798,6 +1273,47 @@
     }
 
     $("analyze").addEventListener("click", analyze);
+    $("save-thresholds").addEventListener("click", saveThresholds);
+    $("reload-settings").addEventListener("click", loadSettings);
+    $("test-buzzer").addEventListener("click", () => {
+      commandAction(
+        $("test-buzzer"),
+        "buzz",
+        { pattern: "double", duration_ms: 180 },
+        "device-message",
+        "蜂鸣器已由设备确认执行。"
+      );
+    });
+    $("reset-sitting").addEventListener("click", () => {
+      commandAction(
+        $("reset-sitting"),
+        "reset_sitting",
+        {},
+        "device-message",
+        "久坐计时已重置。"
+      );
+    });
+    $("save-interval").addEventListener("click", () => {
+      const seconds = Number($("report-interval").value);
+      if (!Number.isFinite(seconds) || seconds < 5 || seconds > 3600) {
+        $("device-message").textContent = "上传间隔应为 5-3600 秒。";
+        return;
+      }
+      commandAction(
+        $("save-interval"),
+        "set_report_interval",
+        { seconds },
+        "device-message",
+        "上传间隔已由设备确认更新。"
+      );
+    });
+    document.querySelectorAll(".tab-button").forEach((button) => {
+      button.addEventListener("click", () => activateTab(button.dataset.tab));
+    });
+    window.addEventListener("hashchange", () => {
+      activateTab(window.location.hash.substring(1));
+    });
+    activateTab(window.location.hash.substring(1) || "live");
     refresh();
     loadReport();
     setInterval(refresh, 5000);
