@@ -6,7 +6,7 @@ if [[ "${EUID}" -ne 0 ]]; then
     exit 1
 fi
 
-REPO_URL="${EYE_CARE_REPO_URL:-https://github.com/lxjj-uuk/Repository-name-eye-care-desk-system.git}"
+ARCHIVE_URL="${EYE_CARE_ARCHIVE_URL:-https://ghfast.top/https://github.com/lxjj-uuk/Repository-name-eye-care-desk-system/archive/refs/heads/main.zip}"
 APP_DIR="${EYE_CARE_APP_DIR:-/opt/eye-care-desk-system}"
 DATA_DIR="${EYE_CARE_DATA_DIR:-/var/lib/eye-care}"
 SERVICE_USER="eyecare"
@@ -14,7 +14,7 @@ SERVICE_NAME="eye-care-api"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y ca-certificates curl git python3 python3-pip python3-venv
+apt-get install -y ca-certificates curl python3 python3-pip python3-venv unzip
 
 if ! swapon --show | grep -q "/swapfile"; then
     fallocate -l 1G /swapfile
@@ -26,13 +26,24 @@ if ! swapon --show | grep -q "/swapfile"; then
     fi
 fi
 
-if [[ -d "${APP_DIR}/.git" ]]; then
-    git -C "${APP_DIR}" fetch origin
-    git -C "${APP_DIR}" checkout main
-    git -C "${APP_DIR}" pull --ff-only origin main
-else
-    git clone --branch main "${REPO_URL}" "${APP_DIR}"
+if [[ "${APP_DIR}" != "/opt/eye-care-desk-system" ]]; then
+    echo "Refusing to replace unexpected app directory: ${APP_DIR}" >&2
+    exit 1
 fi
+
+SOURCE_TMP="$(mktemp -d)"
+trap 'rm -rf "${SOURCE_TMP}"' EXIT
+curl --fail --location --retry 3 \
+    --output "${SOURCE_TMP}/source.zip" \
+    "${ARCHIVE_URL}"
+unzip -q "${SOURCE_TMP}/source.zip" -d "${SOURCE_TMP}"
+SOURCE_DIR="$(find "${SOURCE_TMP}" -maxdepth 1 -type d -name '*-main' | head -n 1)"
+if [[ -z "${SOURCE_DIR}" ]]; then
+    echo "Source archive did not contain the expected main directory." >&2
+    exit 1
+fi
+rm -rf "${APP_DIR}"
+mv "${SOURCE_DIR}" "${APP_DIR}"
 
 if ! id "${SERVICE_USER}" >/dev/null 2>&1; then
     useradd \
