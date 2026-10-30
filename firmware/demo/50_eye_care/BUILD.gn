@@ -15,4 +15,6 @@ static_library("template") {
         "//vendor/pzkj/pz_hi3861/common/bsp/include",
         "."
     ]
+
+    libs = [ "i2c" ]
 }

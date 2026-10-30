@@ -24,6 +24,7 @@ static float g_lux_min = 150.0f;
 static float g_lux_max = 1000.0f;
 static int g_sit_warn_min = 45;
 static int g_sit_strong_min = 60;
+static int g_low_light_cooldown_s = 0;
 
 static void bridge_uart_init(void)
 {
@@ -185,8 +186,13 @@ static void eye_care_task(void)
         (void)hi_uart_write(HI_UART_IDX_2, (hi_u8 *)sensor_line,
                             (hi_u32)strlen(sensor_line));
 
-        if (lux_ret == 0 && lux < g_lux_min) {
+        if (g_low_light_cooldown_s > 0) {
+            g_low_light_cooldown_s -= SAMPLE_INTERVAL_S;
+        }
+        if (occupied && lux_ret == 0 && lux < g_lux_min &&
+            g_low_light_cooldown_s <= 0) {
             buzzer_beep(120);
+            g_low_light_cooldown_s = 60;
         }
         sleep(SAMPLE_INTERVAL_S);
     }
