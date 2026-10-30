@@ -49,6 +49,17 @@ API：      http://127.0.0.1:8080
 模拟器：   http://10.0.2.2:8080
 ```
 
+当前竞赛云端环境：
+
+```text
+API：  http://39.106.195.83:8080
+文档： http://39.106.195.83:8080/docs
+AI：   Kimi kimi-k3.1-pro
+```
+
+云端使用阿里云轻量应用服务器、SQLite 和系统服务 `eye-care-api`。
+完整说明见 `docs/云端部署说明.md`。
+
 本地服务使用：
 
 - `backend/eye_care.db`：SQLite 持久化数据库

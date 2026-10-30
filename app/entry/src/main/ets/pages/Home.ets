@@ -9,6 +9,7 @@ import { SettingsStore } from '../common/SettingsStore';
 @Component
 struct Home {
   @State currentTab: number = 0;
+  @State reportTabVersion: number = 0;
 
   aboutToAppear(): void {
     const context = getContext(this) as common.UIAbilityContext;
@@ -70,11 +71,14 @@ struct Home {
         }.tabBar('设置')
 
         TabContent() {
-          ReportPage()
+          ReportPage({ refreshToken: this.reportTabVersion })
         }.tabBar('报告')
       }
       .onChange((index: number) => {
         this.currentTab = index;
+        if (index === 3) {
+          this.reportTabVersion += 1;
+        }
       })
       .barHeight(58)
       .layoutWeight(1)

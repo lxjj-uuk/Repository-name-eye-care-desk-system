@@ -4,6 +4,7 @@ import { AiInsight, CommandInfo, DailyReport, ReportData } from '../common/Model
 
 @Component
 export struct ReportPage {
+  @Prop @Watch('onRefreshTokenChange') refreshToken: number = 0;
   @State reportDate: string = '';
   @State report: DailyReport | null = null;
   @State error: string = '';
@@ -15,6 +16,10 @@ export struct ReportPage {
   aboutToAppear(): void {
     this.reportDate = this.today();
     this.load();
+  }
+
+  private onRefreshTokenChange(): void {
+    this.load(false);
   }
 
   private today(): string {
