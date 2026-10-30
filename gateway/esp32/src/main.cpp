@@ -21,7 +21,6 @@ constexpr uint32_t kWifiRetryMs = 10000;
 constexpr uint32_t kCommandPollMs = 5000;
 constexpr uint32_t kSetupPortalTimeoutMs = 10UL * 60UL * 1000UL;
 constexpr char kSetupApSsid[] = "EyeCare-Setup";
-constexpr char kSetupApPassword[] = "EyeCare2026";
 
 Preferences preferences;
 BLEServer *bleServer = nullptr;
@@ -33,11 +32,15 @@ bool wifiReady = false;
 bool wifiProvisioningRequested = false;
 bool setupPortalActive = false;
 bool setupHandlersConfigured = false;
+bool setupPortalPending = false;
+bool wifiProvisioningScheduled = false;
 uint8_t wifiFailureCount = 0;
 uint32_t lastWifiAttemptMs = 0;
 uint32_t lastUploadMs = 0;
 uint32_t lastCommandPollMs = 0;
 uint32_t setupPortalStartedMs = 0;
+uint32_t setupPortalPendingAtMs = 0;
+uint32_t wifiProvisioningScheduledAtMs = 0;
 uint32_t uploadIntervalMs = 5000;
 
 String ssid;
@@ -281,8 +284,9 @@ String buildSetupPage() {
       "color:#fff;font:inherit;font-weight:650}.tip{margin:20px;color:#667b83;"
       "font-size:12px;line-height:1.8}.step{color:#0b8b70;font-weight:650}"
       "</style></head><body><main><header><small>EYE CARE / SETUP</small>"
-      "<h1>连接工位 Wi-Fi</h1><p>选择 2.4 GHz 网络并输入密码。保存后设备会自动"
-      "连接云端并关闭配网热点。</p></header><form method=\"POST\" action=\"/save\">"
+      "<h1>连接工位 Wi-Fi</h1><p>本热点无密码。选择 2.4 GHz 网络并输入密码，"
+      "保存后设备会自动连接云端并关闭配网热点。</p></header>"
+      "<form method=\"POST\" action=\"/save\">"
       "<label for=\"ssid\">Wi-Fi 名称</label><input id=\"ssid\" name=\"ssid\" "
       "list=\"networks\" autocomplete=\"off\" required><datalist id=\"networks\">");
   page += options;
@@ -320,7 +324,8 @@ void handleSetupSave() {
         "<body style=\"font-family:sans-serif;padding:32px;color:#082638\">"
         "<h2>配置已保存</h2><p>正在连接 Wi-Fi，成功后配网热点会自动关闭。</p>"
         "</body>"));
-  wifiProvisioningRequested = true;
+  wifiProvisioningScheduled = true;
+  wifiProvisioningScheduledAtMs = millis() + 2000;
 }
 
 void handleSetupNotFound() {
@@ -344,9 +349,11 @@ void startSetupPortal() {
     return;
   }
   configureSetupServer();
-  WiFi.mode(WIFI_AP_STA);
+  wifiReady = false;
+  WiFi.disconnect(false, false);
+  WiFi.mode(WIFI_AP);
   WiFi.setSleep(true);
-  if (!WiFi.softAP(kSetupApSsid, kSetupApPassword)) {
+  if (!WiFi.softAP(kSetupApSsid, nullptr, 1, 0, 4)) {
     Serial.println("[setup] failed to start SoftAP");
     return;
   }
@@ -372,11 +379,22 @@ void stopSetupPortal() {
 }
 
 void serviceSetupPortal() {
+  if (setupPortalPending && millis() - setupPortalPendingAtMs >= 1000) {
+    setupPortalPending = false;
+    startSetupPortal();
+  }
   if (!setupPortalActive) {
     return;
   }
   setupDnsServer.processNextRequest();
   setupServer.handleClient();
+  if (wifiProvisioningScheduled &&
+      static_cast<int32_t>(millis() - wifiProvisioningScheduledAtMs) >= 0) {
+    wifiProvisioningScheduled = false;
+    stopSetupPortal();
+    wifiProvisioningRequested = true;
+    return;
+  }
   if (millis() - setupPortalStartedMs >= kSetupPortalTimeoutMs) {
     notifyStatus("wifi_setup_timeout");
     stopSetupPortal();
@@ -580,11 +598,10 @@ bool executeCloudCommand(const String &commandName,
   }
 
   if (commandName == "wifi_setup") {
-    startSetupPortal();
-    message = setupPortalActive
-                  ? "connect to EyeCare-Setup and open 192.168.4.1"
-                  : "failed to start Wi-Fi setup portal";
-    return setupPortalActive;
+    setupPortalPending = true;
+    setupPortalPendingAtMs = millis();
+    message = "starting EyeCare-Setup portal";
+    return true;
   }
 
   message = "unsupported command";
@@ -744,7 +761,9 @@ void loop() {
   if (!wifiReady || WiFi.status() != WL_CONNECTED) {
     wifiReady = false;
     const uint32_t now = millis();
-    if (!ssid.isEmpty() && now - lastWifiAttemptMs >= kWifiRetryMs) {
+    if (!setupPortalActive &&
+        !ssid.isEmpty() &&
+        now - lastWifiAttemptMs >= kWifiRetryMs) {
       lastWifiAttemptMs = now;
       connectWifi();
     }
