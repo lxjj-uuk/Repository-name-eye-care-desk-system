@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b2925">
+  <meta name="theme-color" content="#06110e">
   <title>Eye Care Desk</title>
   <style>
     :root {
@@ -1325,19 +1325,1099 @@
       }
     }
   </style>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #edf3e9;
+      --ink-soft: #abbdb4;
+      --paper: #081713;
+      --mist: #10251f;
+      --line: rgba(190, 226, 210, .16);
+      --mint: #91ddbd;
+      --mint-soft: rgba(145, 221, 189, .12);
+      --amber: #edbd69;
+      --coral: #e4796e;
+      --muted: #7f958c;
+      --shadow: none;
+      --night: #06110e;
+      --night-soft: #0c201a;
+      --moon: #edf3e9;
+      --lichen: #91ddbd;
+      --solar: #edbd69;
+      --mineral: #7f958c;
+    }
+
+    html {
+      background: var(--night);
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--moon);
+      background:
+        radial-gradient(circle at 88% 6%, rgba(237, 189, 105, .08), transparent 23rem),
+        radial-gradient(circle at 8% 24%, rgba(145, 221, 189, .08), transparent 27rem),
+        var(--night);
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .18;
+      background-image:
+        repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.025) 3px 4px);
+      mix-blend-mode: soft-light;
+    }
+
+    .shell {
+      width: min(100%, 560px);
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(16, 37, 31, .38), transparent 28rem),
+        var(--paper);
+      box-shadow: none;
+    }
+
+    .mast,
+    body[data-tab]:not([data-tab="live"]) .mast {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 0;
+      margin: 0;
+      padding: max(18px, env(safe-area-inset-top)) 22px 16px;
+      overflow: visible;
+      color: var(--moon);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid rgba(190, 226, 210, .1);
+      border-radius: 0;
+      isolation: auto;
+    }
+
+    .mast::before,
+    .mast::after {
+      content: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-width: 0;
+    }
+
+    .brand-orbit {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      border: 1px solid rgba(145, 221, 189, .54);
+      border-radius: 50%;
+    }
+
+    .brand-orbit::before,
+    .brand-orbit::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .brand-orbit::before {
+      inset: 7px;
+      border: 1px solid rgba(145, 221, 189, .38);
+    }
+
+    .brand-orbit::after {
+      width: 5px;
+      height: 5px;
+      top: 4px;
+      right: 4px;
+      background: var(--solar);
+      box-shadow: 0 0 12px rgba(237, 189, 105, .7);
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 2px;
+    }
+
+    .brand-copy strong {
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: .04em;
+      line-height: 1.1;
+    }
+
+    .brand-copy small {
+      color: var(--mineral);
+      font-size: 8px;
+      letter-spacing: .16em;
+      line-height: 1.2;
+    }
+
+    .mast-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mast-clock {
+      color: var(--ink-soft);
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .06em;
+    }
+
+    .status {
+      padding: 6px 9px;
+      border: 1px solid rgba(190, 226, 210, .18);
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink-soft);
+      font-size: 9px;
+      letter-spacing: .03em;
+    }
+
+    .status-dot {
+      width: 5px;
+      height: 5px;
+      box-shadow: 0 0 0 4px rgba(145, 221, 189, .08), 0 0 15px rgba(145, 221, 189, .45);
+    }
+
+    main,
+    body[data-tab]:not([data-tab="live"]) main {
+      margin: 0;
+      padding: 0 22px calc(112px + env(safe-area-inset-bottom));
+    }
+
+    .view-head,
+    body[data-tab]:not([data-tab="live"]) .view-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 0;
+      padding: 30px 0 20px;
+      color: var(--moon);
+    }
+
+    .view-heading {
+      display: flex;
+      align-items: baseline;
+      gap: 11px;
+    }
+
+    .view-index {
+      color: var(--solar);
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: .08em;
+    }
+
+    .view-title {
+      margin: 0;
+      color: var(--moon);
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: 24px;
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: .02em;
+    }
+
+    .view-note,
+    #view-live .view-note {
+      color: var(--mineral);
+      font-size: 9px;
+      line-height: 1.5;
+      text-align: right;
+    }
+
+    .tab-view:not([hidden]) {
+      animation: fieldReveal .52s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    @keyframes fieldReveal {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+        clip-path: inset(0 0 12% 0);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        clip-path: inset(0);
+      }
+    }
+
+    .live-panel {
+      position: relative;
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 0;
+      align-items: end;
+      min-height: 294px;
+      padding: 0 0 22px;
+      color: var(--moon);
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+      isolation: isolate;
+    }
+
+    .live-panel::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      width: 322px;
+      height: 322px;
+      left: -118px;
+      top: -38px;
+      border: 1px solid rgba(145, 221, 189, .1);
+      border-radius: 50%;
+      box-shadow:
+        0 0 0 34px rgba(145, 221, 189, .018),
+        0 0 0 72px rgba(145, 221, 189, .012);
+      animation: orbitBreathe 7s ease-in-out infinite;
+    }
+
+    .live-panel::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      left: -22px;
+      right: -22px;
+      bottom: 0;
+      height: 1px;
+      border: 0;
+      border-radius: 0;
+      background: linear-gradient(90deg, transparent, rgba(190, 226, 210, .24) 12%, rgba(190, 226, 210, .06) 78%, transparent);
+    }
+
+    @keyframes orbitBreathe {
+      50% { transform: scale(1.035); opacity: .72; }
+    }
+
+    .gauge {
+      position: relative;
+      width: 190px;
+      aspect-ratio: 1;
+      margin-left: -20px;
+      filter: none;
+    }
+
+    .gauge::before,
+    .gauge::after {
+      content: "";
+      position: absolute;
+      inset: 9px;
+      border: 1px dashed rgba(220, 245, 234, .1);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .gauge::after {
+      inset: 30px;
+      border-style: solid;
+      border-color: rgba(220, 245, 234, .06);
+    }
+
+    .gauge svg {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-track {
+      stroke: rgba(224, 243, 235, .09);
+      stroke-width: 2.2;
+    }
+
+    .gauge-value {
+      stroke-width: 4.2;
+      filter: drop-shadow(0 0 8px rgba(237, 189, 105, .34));
+      transition: stroke-dashoffset .85s cubic-bezier(.2, .8, .2, 1), stroke .4s ease;
+    }
+
+    .gauge-copy {
+      position: absolute;
+      z-index: 2;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      text-align: center;
+    }
+
+    .gauge-number {
+      color: var(--moon);
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: 66px;
+      font-weight: 600;
+      line-height: .9;
+      letter-spacing: -.07em;
+    }
+
+    .gauge-label {
+      margin-top: 9px;
+      color: var(--mineral);
+      font-size: 9px;
+      letter-spacing: .16em;
+    }
+
+    .live-copy {
+      align-self: end;
+      padding: 0 0 28px 5px;
+    }
+
+    .live-copy .eyebrow {
+      color: var(--mineral);
+      font-size: 9px;
+      letter-spacing: .15em;
+    }
+
+    .risk-title {
+      margin: 10px 0 12px;
+      color: var(--moon);
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: clamp(30px, 8.5vw, 38px);
+      font-weight: 500;
+      line-height: 1.12;
+      letter-spacing: -.04em;
+    }
+
+    .risk-copy {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 11px;
+      line-height: 1.75;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      margin: 24px -22px 0;
+      padding: 0 22px;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric {
+      position: relative;
+      min-height: 118px;
+      padding: 20px 13px 18px;
+      overflow: visible;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .metric:first-child {
+      padding-left: 0;
+    }
+
+    .metric + .metric {
+      border-left: 1px solid var(--line);
+    }
+
+    .metric::after {
+      content: none;
+    }
+
+    .metric-label {
+      color: var(--mineral);
+      font-size: 9px;
+      letter-spacing: .12em;
+    }
+
+    .metric-value {
+      margin-top: 24px;
+      color: var(--moon);
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: clamp(31px, 9vw, 40px);
+      font-weight: 500;
+      line-height: .9;
+      letter-spacing: -.045em;
+    }
+
+    .metric-unit {
+      margin-left: 4px;
+      color: var(--mineral);
+      font-family: "PingFang SC", sans-serif;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: .02em;
+    }
+
+    .section {
+      margin-top: 44px;
+    }
+
+    .section-head {
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      color: var(--moon);
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: .02em;
+    }
+
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 14px;
+      height: 1px;
+      margin-right: 8px;
+      margin-bottom: 5px;
+      background: var(--solar);
+    }
+
+    .section-note {
+      color: var(--mineral);
+      font-size: 9px;
+    }
+
+    .trajectory {
+      position: relative;
+      padding: 12px 0 8px;
+      overflow: hidden;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .trajectory::before {
+      content: "";
+      position: absolute;
+      inset: 8px -18px 18px;
+      background: radial-gradient(ellipse at 24% 72%, rgba(145, 221, 189, .1), transparent 52%);
+      pointer-events: none;
+    }
+
+    .trajectory svg {
+      position: relative;
+      height: 122px;
+      overflow: visible;
+    }
+
+    .trajectory .grid {
+      stroke: rgba(190, 226, 210, .14);
+      stroke-dasharray: 1 7;
+    }
+
+    .trajectory .line {
+      stroke: var(--lichen);
+      stroke-width: 1.7;
+      filter: drop-shadow(0 0 6px rgba(145, 221, 189, .32));
+    }
+
+    .trajectory-axis {
+      position: relative;
+      color: var(--mineral);
+      font-size: 8px;
+      letter-spacing: .08em;
+    }
+
+    .presence-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin-top: 28px;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .presence-item {
+      min-height: 84px;
+      padding: 18px 12px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .presence-item:first-child {
+      padding-left: 0;
+    }
+
+    .presence-item + .presence-item {
+      border-left: 1px solid var(--line);
+    }
+
+    .presence-icon {
+      width: 31px;
+      height: 31px;
+      color: var(--lichen);
+      background: transparent;
+      border: 1px solid rgba(145, 221, 189, .26);
+      border-radius: 50%;
+    }
+
+    .presence-value {
+      color: var(--moon);
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 20px;
+      font-weight: 500;
+    }
+
+    .presence-label {
+      color: var(--mineral);
+      font-size: 9px;
+    }
+
+    .history-list {
+      max-height: calc(100svh - 226px);
+      padding-left: 34px;
+      overflow-y: auto;
+      background:
+        linear-gradient(90deg, transparent 12px, rgba(145, 221, 189, .22) 12px, rgba(145, 221, 189, .22) 13px, transparent 13px);
+      border: 0;
+      border-radius: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(145, 221, 189, .26) transparent;
+    }
+
+    .history-row {
+      position: relative;
+      grid-template-columns: 58px minmax(0, 1fr) 7px;
+      gap: 11px;
+      min-height: 82px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(190, 226, 210, .1);
+    }
+
+    .history-row::before {
+      content: "";
+      position: absolute;
+      left: -25px;
+      top: 32px;
+      width: 7px;
+      height: 7px;
+      border: 1px solid var(--lichen);
+      border-radius: 50%;
+      background: var(--paper);
+      box-shadow: 0 0 0 4px var(--paper);
+    }
+
+    .history-row:last-child {
+      border-bottom: 0;
+    }
+
+    .history-time {
+      color: var(--mineral);
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: 10px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-main {
+      min-width: 0;
+    }
+
+    .history-readings {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .history-reading {
+      color: var(--moon);
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: 17px;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .history-reading small {
+      margin-left: 2px;
+      color: var(--mineral);
+      font-family: "PingFang SC", sans-serif;
+      font-size: 8px;
+      font-weight: 400;
+    }
+
+    .history-meta {
+      margin-top: 7px;
+      color: var(--mineral);
+      font-size: 9px;
+    }
+
+    .history-risk {
+      width: 6px;
+      height: 6px;
+      background: var(--lichen);
+      box-shadow: 0 0 10px rgba(145, 221, 189, .4);
+    }
+
+    .settings-group {
+      margin: 0;
+      padding: 28px 0 30px;
+      border-top: 1px solid var(--line);
+    }
+
+    .settings-group:first-of-type {
+      border-top: 0;
+      padding-top: 2px;
+    }
+
+    .settings-heading {
+      margin: 0 0 23px;
+      color: var(--moon);
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: 23px;
+      font-weight: 500;
+      letter-spacing: .01em;
+    }
+
+    .field-grid {
+      gap: 22px 18px;
+    }
+
+    .field {
+      gap: 8px;
+    }
+
+    .field label {
+      color: var(--mineral);
+      font-size: 9px;
+      letter-spacing: .04em;
+    }
+
+    .field input {
+      width: 100%;
+      height: 47px;
+      padding: 0 0 6px;
+      color: var(--moon);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid rgba(190, 226, 210, .23);
+      border-radius: 0;
+      box-shadow: none;
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: 25px;
+      font-variant-numeric: tabular-nums;
+      -webkit-text-fill-color: var(--moon);
+    }
+
+    .field input:focus {
+      outline: 0;
+      border-bottom-color: var(--lichen);
+      box-shadow: 0 1px 0 var(--lichen);
+    }
+
+    .action-row {
+      gap: 9px;
+      margin-top: 24px;
+    }
+
+    .analyze-button,
+    .action-button,
+    .secondary-button {
+      min-height: 49px;
+      height: 49px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      box-shadow: none;
+    }
+
+    .analyze-button,
+    .action-button {
+      color: #10211c;
+      background: var(--lichen);
+      border: 1px solid var(--lichen);
+      box-shadow: 0 0 0 rgba(145, 221, 189, 0);
+    }
+
+    .secondary-button {
+      color: var(--ink-soft);
+      background: transparent;
+      border: 1px solid rgba(190, 226, 210, .21);
+    }
+
+    .analyze-button:active,
+    .action-button:active,
+    .secondary-button:active {
+      transform: scale(.985);
+      box-shadow: none;
+    }
+
+    .settings-hint,
+    .message {
+      color: var(--mineral);
+      font-size: 10px;
+      line-height: 1.75;
+    }
+
+    .network-result {
+      padding: 16px 0;
+      color: var(--ink-soft);
+      background: transparent;
+      border: 0;
+      border-top: 1px solid rgba(190, 226, 210, .13);
+      border-bottom: 1px solid rgba(190, 226, 210, .13);
+      border-radius: 0;
+    }
+
+    .network-result-icon {
+      color: var(--night);
+      background: var(--lichen);
+    }
+
+    .network-result-title {
+      color: var(--moon);
+    }
+
+    .network-result-copy {
+      color: var(--mineral);
+    }
+
+    .report-sheet {
+      position: relative;
+      margin-top: 0;
+      padding: 8px 0 22px;
+      overflow: visible;
+      color: var(--moon);
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .report-sheet::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 64px;
+      height: 1px;
+      background: var(--solar);
+    }
+
+    .report-head {
+      position: relative;
+      display: block;
+      padding-top: 27px;
+    }
+
+    .report-title {
+      color: var(--moon);
+      font-family: "Songti SC", "STSong", "Noto Serif SC", serif;
+      font-size: clamp(33px, 10vw, 46px);
+      font-weight: 500;
+      line-height: 1.02;
+      letter-spacing: -.05em;
+      white-space: nowrap;
+    }
+
+    .report-meta {
+      margin-top: 14px;
+      color: var(--mineral);
+      font-size: 9px;
+    }
+
+    .source-tag {
+      position: absolute;
+      top: 0;
+      right: 0;
+      max-width: 72%;
+      padding: 6px 0;
+      overflow: hidden;
+      color: var(--lichen);
+      background: transparent;
+      border: 0;
+      border-top: 1px solid rgba(145, 221, 189, .32);
+      border-radius: 0;
+      font-size: 9px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .summary {
+      margin: 28px 0 24px;
+      padding-top: 22px;
+      color: #d8e4dc;
+      border-top: 1px solid var(--line);
+      font-family: "Songti SC", "STSong", serif;
+      font-size: 18px;
+      line-height: 1.9;
+      letter-spacing: .01em;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 0;
+      margin: 0 0 30px;
+    }
+
+    .insight {
+      padding: 17px 0 18px 20px;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid rgba(190, 226, 210, .1);
+      border-left: 0;
+      border-radius: 0;
+    }
+
+    .insight h3 {
+      color: var(--moon);
+      font-size: 13px;
+    }
+
+    .insight p {
+      color: var(--ink-soft);
+      font-size: 11px;
+      line-height: 1.75;
+    }
+
+    .recommendations {
+      display: grid;
+      gap: 0;
+      margin: 0 0 30px;
+      padding: 0;
+      list-style: none;
+      counter-reset: advice;
+    }
+
+    .recommendations li {
+      position: relative;
+      min-height: 58px;
+      padding: 16px 0 16px 34px;
+      color: var(--ink-soft);
+      background: transparent;
+      border: 0;
+      border-top: 1px solid rgba(190, 226, 210, .1);
+      border-radius: 0;
+      counter-increment: advice;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .recommendations li::before {
+      content: counter(advice, decimal-leading-zero);
+      position: absolute;
+      left: 0;
+      top: 17px;
+      color: var(--solar);
+      font-family: "DIN Alternate", "Avenir Next Condensed", sans-serif;
+      font-size: 10px;
+    }
+
+    .analyze-button {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .success-banner {
+      color: var(--moon);
+      background: rgba(145, 221, 189, .1);
+      border: 1px solid rgba(145, 221, 189, .2);
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .success-banner span {
+      color: var(--ink-soft);
+    }
+
+    .success-banner button {
+      color: var(--lichen);
+    }
+
+    .empty {
+      color: var(--mineral);
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 15px;
+      color: #637a70;
+      border-top-color: rgba(190, 226, 210, .1);
+    }
+
+    .tabbar {
+      width: min(calc(100% - 24px), 536px);
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid rgba(190, 226, 210, .14);
+      border-radius: 2px 18px 2px 2px;
+      background: rgba(7, 21, 17, .9);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, .34);
+      backdrop-filter: blur(20px) saturate(125%);
+    }
+
+    .tab-button {
+      position: relative;
+      gap: 5px;
+      min-height: 64px;
+      padding: 8px 2px 7px;
+      color: #697e75;
+      background: transparent;
+      border-radius: 0;
+      transition: color .2s ease, background .2s ease, transform .16s ease;
+    }
+
+    .tab-button + .tab-button {
+      border-left: 1px solid rgba(190, 226, 210, .08);
+    }
+
+    .tab-button::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 0;
+      height: 2px;
+      background: var(--solar);
+      transform: translateX(-50%);
+      transition: width .22s ease;
+    }
+
+    .tab-button.active {
+      color: var(--moon);
+      background: linear-gradient(180deg, rgba(145, 221, 189, .08), transparent);
+      box-shadow: none;
+      font-weight: 500;
+    }
+
+    .tab-button.active::before {
+      width: 22px;
+    }
+
+    .tab-button.active svg {
+      stroke: var(--lichen);
+    }
+
+    .tab-button svg {
+      width: 19px;
+      height: 19px;
+      stroke-width: 1.5;
+    }
+
+    .tab-button:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 1px solid var(--solar);
+      outline-offset: 3px;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      opacity: .35;
+    }
+
+    @media (max-width: 380px) {
+      .mast,
+      body[data-tab]:not([data-tab="live"]) .mast {
+        padding-inline: 18px;
+      }
+
+      main,
+      body[data-tab]:not([data-tab="live"]) main {
+        padding-inline: 18px;
+      }
+
+      .mast-clock {
+        display: none;
+      }
+
+      .live-panel {
+        grid-template-columns: 168px minmax(0, 1fr);
+      }
+
+      .gauge {
+        width: 168px;
+        margin-left: -14px;
+      }
+
+      .gauge-number {
+        font-size: 57px;
+      }
+
+      .risk-title {
+        font-size: 29px;
+      }
+
+      .metrics {
+        margin-inline: -18px;
+        padding-inline: 18px;
+      }
+
+      .metric {
+        padding-inline: 9px;
+      }
+
+      .metric-value {
+        font-size: 29px;
+      }
+
+      .history-list {
+        max-height: calc(100svh - 218px);
+      }
+    }
+
+    @media (max-width: 340px) {
+      .live-panel {
+        grid-template-columns: 150px minmax(0, 1fr);
+      }
+
+      .gauge {
+        width: 150px;
+        margin-left: -8px;
+      }
+
+      .gauge-number {
+        font-size: 52px;
+      }
+
+      .risk-title {
+        font-size: 26px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="shell">
     <header class="mast">
-      <div class="topline">
-        <span>EYE CARE / CLOUD</span>
+      <div class="brand">
+        <span class="brand-orbit" aria-hidden="true"></span>
+        <span class="brand-copy">
+          <strong>工位光场</strong>
+          <small>EYE CARE DESK</small>
+        </span>
+      </div>
+      <div class="mast-meta">
+        <span id="mast-clock" class="mast-clock">--:--</span>
         <span id="status" class="status offline">
           <span class="status-dot"></span>
           <span id="status-text">连接中</span>
         </span>
       </div>
-      <h1>把每一次专注，<br>留在舒适的光里</h1>
-      <p>工位里的光照、人体与久坐变化持续汇入云端。无需操作，也能看见环境如何影响专注。</p>
     </header>
 
     <main>
@@ -1350,7 +2430,10 @@
       </div>
       <section id="view-live" class="tab-view active" aria-label="实时">
         <div class="view-head">
-          <h2 class="view-title">实时状态</h2>
+          <div class="view-heading">
+            <span class="view-index">01</span>
+            <h2 class="view-title">此刻工位</h2>
+          </div>
           <span class="view-note">每 5 秒同步云端</span>
         </div>
       <section class="live-panel" aria-label="实时用眼风险">
@@ -1366,7 +2449,7 @@
           </div>
         </div>
         <div class="live-copy">
-          <div class="eyebrow">当前工位</div>
+          <div class="eyebrow">环境状态</div>
           <div id="risk-title" class="risk-title">等待设备数据</div>
           <p id="risk-copy" class="risk-copy">正在连接云端传感器。</p>
         </div>
@@ -1389,15 +2472,15 @@
 
       <section class="section">
         <div class="section-head">
-          <h2 class="section-title">今日光照轨迹</h2>
+          <h2 class="section-title">光的轨迹</h2>
           <span id="updated-at" class="section-note">等待同步</span>
         </div>
         <div class="trajectory">
           <svg id="lux-chart" viewBox="0 0 360 106" preserveAspectRatio="none" role="img" aria-label="今日照度趋势">
             <defs>
               <linearGradient id="area-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#57d7b2" stop-opacity=".42"></stop>
-                <stop offset="1" stop-color="#57d7b2" stop-opacity=".02"></stop>
+                <stop offset="0" stop-color="#91ddbd" stop-opacity=".34"></stop>
+                <stop offset="1" stop-color="#91ddbd" stop-opacity=".01"></stop>
               </linearGradient>
             </defs>
             <line class="grid" x1="0" y1="20" x2="360" y2="20"></line>
@@ -1440,7 +2523,10 @@
 
       <section id="view-history" class="tab-view" aria-label="历史" hidden>
         <div class="view-head">
-          <h2 class="view-title">最近记录</h2>
+          <div class="view-heading">
+            <span class="view-index">02</span>
+            <h2 class="view-title">时间切片</h2>
+          </div>
           <span id="history-count" class="view-note">等待同步</span>
         </div>
         <div class="history-list" id="history-list"></div>
@@ -1449,7 +2535,10 @@
 
       <section id="view-report" class="tab-view" aria-labelledby="report-title" hidden>
       <div class="view-head">
-        <h2 class="view-title">今日研判</h2>
+        <div class="view-heading">
+          <span class="view-index">04</span>
+          <h2 class="view-title">今日研判</h2>
+        </div>
         <span class="view-note">AI 环境分析</span>
       </div>
       <section class="section report-sheet">
@@ -1470,7 +2559,10 @@
 
       <section id="view-settings" class="tab-view" aria-label="设置" hidden>
         <div class="view-head">
-          <h2 class="view-title">工位设置</h2>
+          <div class="view-heading">
+            <span class="view-index">03</span>
+            <h2 class="view-title">控制台</h2>
+          </div>
           <span class="view-note">云端配置</span>
         </div>
 
@@ -1599,12 +2691,12 @@
 
     function riskPresentation(level, score) {
       if (level === "high" || score >= .7) {
-        return ["明显偏高", "先降低当前负荷，再继续工作。", "#f06f68"];
+        return ["明显偏高", "先降低当前负荷，再继续工作。", "#e4796e"];
       }
       if (level === "medium" || score >= .4) {
-        return ["需要留意", "环境尚可控制，建议现在做一次调整。", "#efb24f"];
+        return ["需要留意", "环境尚可控制，建议现在做一次调整。", "#edbd69"];
       }
-      return ["状态平稳", "当前指标处于可控区间。", "#57d7b2"];
+      return ["状态平稳", "当前指标处于可控区间。", "#91ddbd"];
     }
 
     async function api(path, options = {}) {
@@ -1731,13 +2823,25 @@
         time.textContent = timeText(item.ts);
 
         const main = document.createElement("div");
-        const reading = document.createElement("div");
-        reading.className = "history-main";
-        reading.textContent = `${Number.isFinite(item.lux) ? item.lux : "--"} lux · ${Number.isFinite(item.temperature) ? item.temperature.toFixed(1) : "--"}°C · ${Number.isFinite(item.humidity) ? item.humidity.toFixed(1) : "--"}%`;
+        const readings = document.createElement("div");
+        readings.className = "history-readings";
+        [
+          [Number.isFinite(item.lux) ? item.lux : "--", "lux"],
+          [Number.isFinite(item.temperature) ? item.temperature.toFixed(1) : "--", "°C"],
+          [Number.isFinite(item.humidity) ? item.humidity.toFixed(1) : "--", "%"]
+        ].forEach(([value, unit]) => {
+          const reading = document.createElement("span");
+          reading.className = "history-reading";
+          reading.textContent = value;
+          const unitNode = document.createElement("small");
+          unitNode.textContent = unit;
+          reading.append(unitNode);
+          readings.append(reading);
+        });
         const meta = document.createElement("div");
         meta.className = "history-meta";
         meta.textContent = `${item.occupied ? "有人" : "无人"} · 久坐 ${item.sit_cont_min || 0} 分钟`;
-        main.append(reading, meta);
+        main.append(readings, meta);
 
         const risk = document.createElement("span");
         risk.className = "history-risk";
@@ -1874,6 +2978,16 @@
       if (selected === "history") renderHistory(historyItems);
       if (selected === "settings") loadSettings();
       if (selected === "report") loadReport();
+    }
+
+    function updateClock() {
+      const node = $("mast-clock");
+      if (!node) return;
+      node.textContent = new Date().toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
     }
 
     function clearReportExtras() {
@@ -2029,8 +3143,10 @@
       activateTab(window.location.hash.substring(1));
     });
     activateTab(window.location.hash.substring(1) || "live");
+    updateClock();
     refresh();
     loadReport();
+    setInterval(updateClock, 30000);
     setInterval(refresh, 5000);
   </script>
 </body>
