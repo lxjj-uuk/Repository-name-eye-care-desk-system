@@ -30,7 +30,7 @@ updates = {
     "LLM_API_URL": "https://api.moonshot.cn/v1/chat/completions",
     "LLM_API_KEY": os.environ["KIMI_API_KEY"],
     "LLM_MODEL": "kimi-k3.1-pro",
-    "LLM_MAX_TOKENS": "600",
+    "LLM_MAX_TOKENS": "3000",
     "LLM_TEMPERATURE": "1",
     "LOCAL_LLM_MODEL_PATH": "",
 }
