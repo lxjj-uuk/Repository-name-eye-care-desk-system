@@ -9,7 +9,7 @@ from ..models import Command, utcnow
 from ..schemas import CommandCreate, CommandOut
 from ..security import require_token
 from ..services.iotda import send_command
-from .devices import ensure_device
+from .devices import ensure_device, get_config
 
 
 router = APIRouter(
@@ -170,6 +170,10 @@ def confirm_command(command_id: int, db: Session = Depends(get_db)):
         command.status = "sent"
         command.sent_at = utcnow()
         command.result = result
+        if command.command_name == "set_report_interval":
+            seconds = int((command.params or {}).get("seconds", 0))
+            if seconds > 0:
+                get_config(db, command.device_id).report_interval = seconds
     except Exception as exc:  # noqa: BLE001
         command.status = "failed"
         command.result = {"error": str(exc)}

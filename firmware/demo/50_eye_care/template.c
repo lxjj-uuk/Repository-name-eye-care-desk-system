@@ -25,6 +25,7 @@ static float g_lux_max = 1000.0f;
 static int g_sit_warn_min = 45;
 static int g_sit_strong_min = 60;
 static int g_low_light_cooldown_s = 0;
+static int g_last_sit_alert_min = 0;
 
 static void bridge_uart_init(void)
 {
@@ -91,6 +92,7 @@ static void handle_bridge_commands(void)
         g_sit_cont_seconds = 0;
         g_sit_total_seconds = 0;
         g_seconds_since_motion = 0;
+        g_last_sit_alert_min = 0;
         printf("[eye-care] sitting counters reset\n");
     }
 }
@@ -186,10 +188,26 @@ static void eye_care_task(void)
         (void)hi_uart_write(HI_UART_IDX_2, (hi_u8 *)sensor_line,
                             (hi_u32)strlen(sensor_line));
 
+        bool sit_alert_triggered = false;
+        if (sit_cont_min < g_sit_warn_min) {
+            g_last_sit_alert_min = 0;
+        } else if (sit_cont_min >= g_sit_strong_min &&
+                   g_last_sit_alert_min < g_sit_strong_min) {
+            buzzer_beep(450);
+            g_last_sit_alert_min = g_sit_strong_min;
+            sit_alert_triggered = true;
+        } else if (sit_cont_min >= g_sit_warn_min &&
+                   g_last_sit_alert_min < g_sit_warn_min) {
+            buzzer_beep(180);
+            g_last_sit_alert_min = g_sit_warn_min;
+            sit_alert_triggered = true;
+        }
+
         if (g_low_light_cooldown_s > 0) {
             g_low_light_cooldown_s -= SAMPLE_INTERVAL_S;
         }
-        if (occupied && lux_ret == 0 && lux < g_lux_min &&
+        if (!sit_alert_triggered &&
+            occupied && lux_ret == 0 && lux < g_lux_min &&
             g_low_light_cooldown_s <= 0) {
             buzzer_beep(120);
             g_low_light_cooldown_s = 60;
