@@ -27,6 +27,9 @@ def test_health():
         response = client.get("/health")
         assert response.status_code == 200
         assert response.json()["status"] == "ok"
+        mobile = client.get("/mobile")
+        assert mobile.status_code == 200
+        assert "Eye Care Desk" in mobile.text
 
 
 def test_full_flow():

@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#082638">
+  <title>Eye Care Desk</title>
+  <style>
+    :root {
+      --ink: #082638;
+      --ink-soft: #29485a;
+      --paper: #f7faf8;
+      --mist: #e6efec;
+      --line: #cad9d5;
+      --mint: #57d7b2;
+      --mint-soft: #d7f5eb;
+      --amber: #efb24f;
+      --coral: #f06f68;
+      --muted: #647983;
+      --shadow: 0 24px 70px rgba(8, 38, 56, .16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: #dbe8e4; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 90% 4%, rgba(87, 215, 178, .24), transparent 28rem),
+        linear-gradient(155deg, #edf5f2 0%, #dde9e6 46%, #edf2ef 100%);
+      font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+    }
+
+    button { font: inherit; }
+
+    .shell {
+      width: min(100%, 560px);
+      min-height: 100vh;
+      margin: 0 auto;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .mast {
+      padding: max(22px, env(safe-area-inset-top)) 22px 64px;
+      color: #fff;
+      background:
+        linear-gradient(120deg, rgba(87, 215, 178, .18), transparent 42%),
+        var(--ink);
+      position: relative;
+    }
+
+    .mast::after {
+      content: "";
+      position: absolute;
+      right: -88px;
+      bottom: -120px;
+      width: 310px;
+      height: 240px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 50%;
+      transform: rotate(-18deg);
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-size: 11px;
+      letter-spacing: .14em;
+      color: #a9c5cc;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: #eafff9;
+      letter-spacing: .04em;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 0 5px rgba(87, 215, 178, .12);
+    }
+
+    .status.offline .status-dot { background: var(--coral); }
+
+    h1 {
+      margin: 28px 0 8px;
+      max-width: 8em;
+      font-size: clamp(34px, 10vw, 48px);
+      line-height: 1.06;
+      letter-spacing: -.045em;
+      font-weight: 650;
+    }
+
+    .mast p {
+      margin: 0;
+      max-width: 28em;
+      color: #bed0d6;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    main {
+      position: relative;
+      margin-top: -34px;
+      padding: 0 16px calc(34px + env(safe-area-inset-bottom));
+    }
+
+    .live-panel {
+      position: relative;
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 22px 20px;
+      color: #fff;
+      background: linear-gradient(145deg, #0b3043, #123f52);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 3px 30px 3px 3px;
+    }
+
+    .gauge {
+      position: relative;
+      width: 126px;
+      aspect-ratio: 1;
+    }
+
+    .gauge svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .gauge-track { stroke: rgba(255,255,255,.11); }
+    .gauge-value {
+      stroke: var(--amber);
+      stroke-linecap: round;
+      transition: stroke-dashoffset .5s ease, stroke .3s ease;
+    }
+
+    .gauge-copy {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      text-align: center;
+    }
+
+    .gauge-number {
+      font-family: "Avenir Next Condensed", "DIN Alternate", sans-serif;
+      font-size: 39px;
+      line-height: 1;
+      font-weight: 700;
+      letter-spacing: -.04em;
+    }
+
+    .gauge-label {
+      margin-top: 5px;
+      color: #a9c5cc;
+      font-size: 10px;
+      letter-spacing: .12em;
+    }
+
+    .live-copy .eyebrow,
+    .section-title,
+    .metric-label,
+    .report-meta {
+      color: var(--muted);
+    }
+
+    .live-copy .eyebrow {
+      color: #9bb7bf;
+      font-size: 11px;
+      letter-spacing: .1em;
+    }
+
+    .risk-title {
+      margin: 6px 0 8px;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+    }
+
+    .risk-copy {
+      margin: 0;
+      color: #c7d7dc;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-top: 12px;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .metric {
+      min-height: 96px;
+      padding: 14px 12px;
+      background: #fbfdfc;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .metric-value {
+      margin-top: 11px;
+      font-family: "Avenir Next Condensed", "DIN Alternate", sans-serif;
+      font-size: 25px;
+      line-height: 1;
+      font-weight: 650;
+      letter-spacing: -.035em;
+      white-space: nowrap;
+    }
+
+    .metric-unit {
+      margin-left: 3px;
+      color: var(--muted);
+      font-family: "PingFang SC", sans-serif;
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+
+    .section {
+      margin-top: 28px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+
+    .section-note {
+      color: #84959b;
+      font-size: 10px;
+    }
+
+    .trajectory {
+      position: relative;
+      padding: 18px 16px 10px;
+      background: #eef5f2;
+      border-left: 3px solid var(--mint);
+    }
+
+    .trajectory svg {
+      width: 100%;
+      height: 106px;
+      overflow: visible;
+    }
+
+    .trajectory .grid {
+      stroke: #cddbd6;
+      stroke-width: 1;
+      stroke-dasharray: 3 5;
+    }
+
+    .trajectory .line {
+      fill: none;
+      stroke: var(--ink);
+      stroke-width: 2.5;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+
+    .trajectory .area { fill: url(#area-fill); }
+
+    .trajectory-axis {
+      display: flex;
+      justify-content: space-between;
+      color: #81939a;
+      font-size: 9px;
+    }
+
+    .presence-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      padding: 16px 0 4px;
+    }
+
+    .presence-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 54px;
+    }
+
+    .presence-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      background: var(--mint-soft);
+      color: #08715b;
+    }
+
+    .presence-icon svg { width: 20px; height: 20px; }
+    .presence-value { font-size: 17px; font-weight: 600; }
+    .presence-label { margin-top: 3px; color: var(--muted); font-size: 10px; }
+
+    .report-sheet {
+      position: relative;
+      padding: 22px 18px 18px;
+      background: #fff;
+      border-top: 4px solid var(--ink);
+      box-shadow: 0 10px 32px rgba(8, 38, 56, .08);
+    }
+
+    .report-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+    }
+
+    .report-title {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -.025em;
+    }
+
+    .report-meta {
+      margin-top: 7px;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    .source-tag {
+      flex: 0 0 auto;
+      max-width: 44%;
+      padding: 5px 8px;
+      color: #0b6e5a;
+      background: var(--mint-soft);
+      font-size: 9px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .summary {
+      margin: 18px 0 0;
+      color: #284453;
+      font-size: 14px;
+      line-height: 1.85;
+    }
+
+    .insight-list {
+      display: grid;
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .insight {
+      padding-left: 13px;
+      border-left: 2px solid var(--amber);
+    }
+
+    .insight[data-level="good"] { border-color: var(--mint); }
+    .insight[data-level="high"] { border-color: var(--coral); }
+    .insight h3 { margin: 0 0 6px; font-size: 14px; }
+    .insight p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.75; }
+
+    .recommendations {
+      display: grid;
+      gap: 8px;
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .recommendations li {
+      padding: 10px 12px;
+      color: #245443;
+      background: #e7f7f0;
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .analyze-button {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 2px;
+      color: #fff;
+      background: var(--ink);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .analyze-button:disabled {
+      color: #70848b;
+      background: #dce6e2;
+      cursor: wait;
+    }
+
+    .analyze-button:focus-visible {
+      outline: 3px solid var(--amber);
+      outline-offset: 3px;
+    }
+
+    .message {
+      min-height: 18px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .empty {
+      padding: 26px 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: #84959b;
+      font-size: 9px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 390px) {
+      .live-panel { grid-template-columns: 112px 1fr; padding: 18px 16px; }
+      .gauge { width: 108px; }
+      .gauge-number { font-size: 34px; }
+      .metric { padding: 12px 9px; }
+      .metric-value { font-size: 22px; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .live-panel, .trajectory, .report-sheet {
+        animation: settle .55s cubic-bezier(.2, .75, .25, 1) both;
+      }
+      .trajectory { animation-delay: .08s; }
+      .report-sheet { animation-delay: .16s; }
+      @keyframes settle {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="mast">
+      <div class="topline">
+        <span>EYE CARE / CLOUD</span>
+        <span id="status" class="status offline">
+          <span class="status-dot"></span>
+          <span id="status-text">连接中</span>
+        </span>
+      </div>
+      <h1>工位状态，<br>现在就能看见</h1>
+      <p>光照、久坐与桌面环境持续汇入云端。数据每 5 秒更新，AI 研判按需生成。</p>
+    </header>
+
+    <main>
+      <section class="live-panel" aria-label="实时用眼风险">
+        <div class="gauge">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="gauge-track" cx="60" cy="60" r="50" fill="none" stroke-width="10"></circle>
+            <circle id="risk-ring" class="gauge-value" cx="60" cy="60" r="50" fill="none"
+              stroke-width="10" stroke-dasharray="314.16" stroke-dashoffset="188.5"></circle>
+          </svg>
+          <div class="gauge-copy">
+            <div id="risk-score" class="gauge-number">--</div>
+            <div class="gauge-label">实时风险</div>
+          </div>
+        </div>
+        <div class="live-copy">
+          <div class="eyebrow">当前工位</div>
+          <div id="risk-title" class="risk-title">等待设备数据</div>
+          <p id="risk-copy" class="risk-copy">正在连接云端传感器。</p>
+        </div>
+      </section>
+
+      <section class="metrics" aria-label="环境数据">
+        <div class="metric">
+          <div class="metric-label">照度</div>
+          <div class="metric-value"><span id="lux">--</span><span class="metric-unit">lux</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">温度</div>
+          <div class="metric-value"><span id="temperature">--</span><span class="metric-unit">°C</span></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">湿度</div>
+          <div class="metric-value"><span id="humidity">--</span><span class="metric-unit">%</span></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2 class="section-title">今日光照轨迹</h2>
+          <span id="updated-at" class="section-note">等待同步</span>
+        </div>
+        <div class="trajectory">
+          <svg id="lux-chart" viewBox="0 0 360 106" preserveAspectRatio="none" role="img" aria-label="今日照度趋势">
+            <defs>
+              <linearGradient id="area-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#57d7b2" stop-opacity=".42"></stop>
+                <stop offset="1" stop-color="#57d7b2" stop-opacity=".02"></stop>
+              </linearGradient>
+            </defs>
+            <line class="grid" x1="0" y1="20" x2="360" y2="20"></line>
+            <line class="grid" x1="0" y1="63" x2="360" y2="63"></line>
+            <line class="grid" x1="0" y1="101" x2="360" y2="101"></line>
+            <path id="lux-area" class="area" d=""></path>
+            <path id="lux-line" class="line" d=""></path>
+          </svg>
+          <div class="trajectory-axis"><span>较早</span><span>现在</span></div>
+        </div>
+      </section>
+
+      <section class="presence-row" aria-label="在座状态">
+        <div class="presence-item">
+          <div class="presence-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="8" r="3.2"></circle>
+              <path d="M5.5 20c.6-4 2.7-6 6.5-6s5.9 2 6.5 6"></path>
+            </svg>
+          </div>
+          <div>
+            <div id="occupied" class="presence-value">--</div>
+            <div class="presence-label">人体存在</div>
+          </div>
+        </div>
+        <div class="presence-item">
+          <div class="presence-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="8"></circle>
+              <path d="M12 7v5l3 2"></path>
+            </svg>
+          </div>
+          <div>
+            <div id="sitting" class="presence-value">--</div>
+            <div class="presence-label">连续久坐</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section report-sheet" aria-labelledby="report-title">
+        <div class="report-head">
+          <div>
+            <h2 id="report-title" class="report-title">今日研判</h2>
+            <div id="report-meta" class="report-meta">等待云端日报</div>
+          </div>
+          <span id="source-tag" class="source-tag">尚未生成</span>
+        </div>
+        <p id="report-summary" class="summary">连接后会先读取已保存的日报；需要新的综合判断时再生成深度分析。</p>
+        <div id="insights" class="insight-list"></div>
+        <ul id="recommendations" class="recommendations"></ul>
+        <button id="analyze" class="analyze-button" type="button">生成今日研判</button>
+        <div id="message" class="message" role="status" aria-live="polite"></div>
+      </section>
+
+      <footer class="footer">
+        <span>EYE CARE DESK · 云端实时监测</span>
+        <span id="footer-time">--</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    const DEVICE_ID = "hi3861_001";
+    const DATE = new Date().toLocaleDateString("sv-SE");
+    let token = "";
+    let analyzeStarted = 0;
+    let analyzeTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function setStatus(online, text) {
+      $("status").classList.toggle("offline", !online);
+      $("status-text").textContent = text;
+    }
+
+    function parseTimestamp(value) {
+      if (!value) return null;
+      const normalized = /(?:Z|[+-]\d\d:\d\d)$/.test(value) ? value : value + "Z";
+      const date = new Date(normalized);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function timeText(value) {
+      const date = parseTimestamp(value);
+      if (!date) return "--:--";
+      return date.toLocaleTimeString("zh-CN", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+      });
+    }
+
+    function riskPresentation(level, score) {
+      if (level === "high" || score >= .7) {
+        return ["明显偏高", "先降低当前负荷，再继续工作。", "#f06f68"];
+      }
+      if (level === "medium" || score >= .4) {
+        return ["需要留意", "环境尚可控制，建议现在做一次调整。", "#efb24f"];
+      }
+      return ["状态平稳", "当前指标处于可控区间。", "#57d7b2"];
+    }
+
+    async function api(path, options = {}) {
+      const headers = Object.assign({
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }, options.headers || {});
+      const response = await fetch(`${API}${path}`, Object.assign({}, options, { headers }));
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.json();
+    }
+
+    async function login() {
+      const response = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "demo", password: "demo123" })
+      });
+      if (!response.ok) throw new Error("登录失败");
+      const data = await response.json();
+      token = data.access_token;
+    }
+
+    function renderLatest(latest) {
+      const telemetry = latest.telemetry;
+      if (!telemetry) {
+        $("risk-title").textContent = "还没有传感器数据";
+        $("risk-copy").textContent = "设备联网后，这里会自动更新。";
+        return;
+      }
+      const score = Number(telemetry.risk || 0);
+      const [title, copy, color] = riskPresentation(telemetry.risk_level, score);
+      $("risk-score").textContent = Math.round(score * 100);
+      $("risk-title").textContent = title;
+      $("risk-copy").textContent = copy;
+      $("risk-ring").style.stroke = color;
+      $("risk-ring").style.strokeDashoffset = String(314.16 * (1 - Math.max(0, Math.min(1, score))));
+      $("lux").textContent = Number.isFinite(telemetry.lux) ? telemetry.lux : "--";
+      $("temperature").textContent = Number.isFinite(telemetry.temperature) ? telemetry.temperature.toFixed(1) : "--";
+      $("humidity").textContent = Number.isFinite(telemetry.humidity) ? telemetry.humidity.toFixed(1) : "--";
+      $("occupied").textContent = telemetry.occupied ? "有人" : "无人";
+      $("sitting").textContent = `${telemetry.sit_cont_min || 0} 分钟`;
+      $("updated-at").textContent = `更新 ${timeText(telemetry.ts)}`;
+      $("footer-time").textContent = `同步 ${new Date().toLocaleTimeString("zh-CN", { hour12: false })}`;
+    }
+
+    function renderChart(items) {
+      const points = items
+        .slice()
+        .reverse()
+        .filter((item) => Number.isFinite(item.lux))
+        .slice(-72);
+      if (!points.length) {
+        $("lux-line").setAttribute("d", "");
+        $("lux-area").setAttribute("d", "");
+        return;
+      }
+      const max = Math.max(1000, ...points.map((item) => item.lux));
+      const coords = points.map((item, index) => {
+        const x = points.length === 1 ? 360 : index * 360 / (points.length - 1);
+        const y = 101 - Math.min(1, item.lux / max) * 92;
+        return [x, y];
+      });
+      const line = coords.map(([x, y], index) => `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+      $("lux-line").setAttribute("d", line);
+      $("lux-area").setAttribute("d", `${line} L360,101 L0,101 Z`);
+    }
+
+    function clearReportExtras() {
+      $("insights").replaceChildren();
+      $("recommendations").replaceChildren();
+    }
+
+    function renderReport(report) {
+      if (!report) {
+        $("source-tag").textContent = "尚未生成";
+        $("report-meta").textContent = "等待云端日报";
+        return;
+      }
+      const data = report.data || {};
+      const isLlm = data.source === "llm";
+      $("source-tag").textContent = isLlm
+        ? `云端模型 ${data.model || ""}`
+        : "规则+风险模型";
+      $("report-meta").textContent = data.generated_at
+        ? `生成于 ${timeText(data.generated_at)}`
+        : "今日累计研判";
+      $("report-summary").textContent = report.summary || "暂无摘要";
+      clearReportExtras();
+      (data.insights || []).forEach((item) => {
+        const article = document.createElement("article");
+        article.className = "insight";
+        article.dataset.level = item.level || "warn";
+        const title = document.createElement("h3");
+        title.textContent = item.title || "分析";
+        const detail = document.createElement("p");
+        detail.textContent = item.detail || "";
+        article.append(title, detail);
+        $("insights").append(article);
+      });
+      (data.recommendations || []).forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        $("recommendations").append(li);
+      });
+    }
+
+    async function refresh() {
+      try {
+        if (!token) await login();
+        const [latest, history] = await Promise.all([
+          api(`/devices/${DEVICE_ID}/latest`),
+          api(`/devices/${DEVICE_ID}/history?limit=120`)
+        ]);
+        renderLatest(latest);
+        renderChart(history.items || []);
+        setStatus(true, "云端在线");
+      } catch (error) {
+        setStatus(false, "连接中断");
+        $("message").textContent = "暂时无法连接云端，正在自动重试。";
+      }
+    }
+
+    async function loadReport() {
+      try {
+        if (!token) await login();
+        const report = await api(`/devices/${DEVICE_ID}/reports/daily?date=${DATE}`);
+        renderReport(report);
+      } catch (error) {
+        $("report-summary").textContent = "今日还没有可用的日报。设备产生数据后即可生成。";
+      }
+    }
+
+    async function analyze() {
+      const button = $("analyze");
+      if (button.disabled) return;
+      button.disabled = true;
+      analyzeStarted = Date.now();
+      analyzeTimer = setInterval(() => {
+        const seconds = Math.round((Date.now() - analyzeStarted) / 1000);
+        $("message").textContent = `云端模型正在分析，已等待 ${seconds} 秒…`;
+      }, 1000);
+      $("message").textContent = "正在结合今日真实数据生成研判…";
+      try {
+        if (!token) await login();
+        const report = await api(`/devices/${DEVICE_ID}/reports/ai?date=${DATE}`, {
+          method: "POST"
+        });
+        renderReport(report);
+        const source = report.data && report.data.source === "llm" ? "深度研判已更新" : "规则研判已更新";
+        $("message").textContent = source;
+      } catch (error) {
+        $("message").textContent = "生成失败，请检查云端服务后重试。";
+      } finally {
+        clearInterval(analyzeTimer);
+        button.disabled = false;
+      }
+    }
+
+    $("analyze").addEventListener("click", analyze);
+    refresh();
+    loadReport();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>

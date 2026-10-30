@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 import threading
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse
 
 from . import models
 from .config import settings
@@ -63,6 +65,18 @@ app.include_router(commands.router)
 app.include_router(commands.actions)
 app.include_router(reports.router)
 app.include_router(ingest.router)
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse(url="/mobile")
+
+
+@app.get("/mobile", include_in_schema=False)
+def mobile_dashboard():
+    return FileResponse(STATIC_DIR / "mobile.html")
 
 
 @app.get("/health", tags=["system"])
