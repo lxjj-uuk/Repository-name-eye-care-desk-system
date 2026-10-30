@@ -6,11 +6,11 @@
 #endif
 
 /*
- * Fixed production endpoint. Customers never edit this value.
- * Replace it with the final Render/VPS HTTPS address before release.
+ * Competition cloud endpoint. Local development can override this value
+ * through the Git-ignored cloud_config.local file.
  */
 #ifndef EYE_CARE_CLOUD_URL
-#define EYE_CARE_CLOUD_URL "https://eye-care-cloud.onrender.com"
+#define EYE_CARE_CLOUD_URL "http://39.106.195.83:8080"
 #endif
 
 #ifndef EYE_CARE_DEFAULT_DEVICE_ID
