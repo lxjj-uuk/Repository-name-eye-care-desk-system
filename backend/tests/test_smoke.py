@@ -55,6 +55,8 @@ def test_full_flow():
                 "last_motion_min": 3,
                 "risk": 0.5,
                 "risk_level": "medium",
+                "wifi_ssid": "EyeCare-Test",
+                "wifi_ip": "192.168.1.42",
             },
         )
         assert telemetry.status_code == 201
@@ -64,6 +66,12 @@ def test_full_flow():
         )
         assert latest.status_code == 200
         assert latest.json()["telemetry"]["lux"] == 120
+        network = client.get(
+            "/devices/hi3861_001/network", headers=headers
+        )
+        assert network.status_code == 200
+        assert network.json()["wifi_ssid"] == "EyeCare-Test"
+        assert network.json()["wifi_ip"] == "192.168.1.42"
 
         history = client.get(
             "/devices/hi3861_001/history", headers=headers

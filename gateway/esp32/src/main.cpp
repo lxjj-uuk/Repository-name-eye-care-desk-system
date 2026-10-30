@@ -486,7 +486,9 @@ bool postSensorLine(const char *line) {
                 ",\"sit_total_min\":" + String(sitTotalMin) +
                 ",\"last_motion_min\":" + String(lastMotionMin) +
                 ",\"risk\":" + String(risk, 2) +
-                ",\"risk_level\":\"" + jsonEscape(riskLevel) + "\"";
+                ",\"risk_level\":\"" + jsonEscape(riskLevel) +
+                "\",\"wifi_ssid\":\"" + jsonEscape(WiFi.SSID()) +
+                "\",\"wifi_ip\":\"" + WiFi.localIP().toString() + "\"";
 
   if (luxStatus == 0) {
     const char *lightState =

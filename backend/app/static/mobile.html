@@ -618,6 +618,89 @@
       font-size: 9px;
     }
 
+    .network-result {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      background: var(--mint-soft);
+      border-left: 3px solid #0b9f82;
+    }
+
+    .network-result.waiting {
+      background: #fff7e8;
+      border-left-color: var(--amber);
+    }
+
+    .network-result.offline {
+      background: #fff0ee;
+      border-left-color: var(--coral);
+    }
+
+    .network-result-icon {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 auto;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      color: #08715b;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .network-result.waiting .network-result-icon { color: #9a6500; }
+    .network-result.offline .network-result-icon { color: #a83d38; }
+
+    .network-result-title {
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.4;
+    }
+
+    .network-result-copy {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .success-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 18px;
+      padding: 13px 14px;
+      color: #075f4f;
+      background: #d8f7ed;
+      border: 1px solid #9be0cb;
+    }
+
+    .success-banner[hidden] { display: none; }
+
+    .success-banner strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .success-banner span {
+      display: block;
+      margin-top: 2px;
+      color: #4d746b;
+      font-size: 10px;
+    }
+
+    .success-banner button {
+      margin-left: auto;
+      border: 0;
+      background: transparent;
+      color: #075f4f;
+      font-size: 18px;
+      line-height: 1;
+      padding: 8px;
+    }
+
     .tabbar {
       position: fixed;
       bottom: 0;
@@ -702,6 +785,13 @@
     </header>
 
     <main>
+      <div id="wifi-success-banner" class="success-banner" role="status" hidden>
+        <div>
+          <strong>配网成功</strong>
+          <span>设备已经连接新的 Wi-Fi，云端数据恢复正常。</span>
+        </div>
+        <button id="dismiss-wifi-success" type="button" aria-label="关闭配网成功提示">×</button>
+      </div>
       <section id="view-live" class="tab-view active" aria-label="实时">
         <div class="view-head">
           <h2 class="view-title">实时状态</h2>
@@ -867,17 +957,19 @@
 
         <div class="settings-group">
           <h3 class="settings-heading">网络与配网</h3>
-          <div class="network-state">
-            <span class="network-badge">自动重连</span>
-            <span id="network-copy">ESP32 会记住上次成功连接的 2.4 GHz Wi-Fi。</span>
+          <div id="network-result" class="network-result">
+            <span class="network-result-icon" aria-hidden="true">✓</span>
+            <div>
+              <div id="network-title" class="network-result-title">设备连接正常</div>
+              <div id="network-copy" class="network-result-copy">
+                ESP32 会记住上次成功连接的 2.4 GHz Wi-Fi。
+              </div>
+            </div>
           </div>
           <p class="settings-hint">
-            首次使用或更换热点时，在 iPhone 的 nRF Connect 中连接
-            <strong>EyeCare-5B98</strong>，向 UART RX 写入 SSID 和密码。配网成功后，
-            日常断电重启不会再次用到 nRF Connect。
-          </p>
-          <p class="settings-hint">
-            Safari 不支持 Web Bluetooth，因此此网页不提供浏览器内 BLE 配网。
+            更换 Wi-Fi 时点击下方按钮，手机连接无密码的
+            <strong>EyeCare-Setup</strong>，再打开 <strong>192.168.4.1</strong>。
+            保存成功后设备会自动重连云端，日常断电重启无需重新配网。
           </p>
           <button id="start-wifi-setup" class="action-button" type="button" style="width: 100%;">
             开启配网热点
@@ -920,6 +1012,8 @@
     let analyzeTimer = null;
     let historyItems = [];
     let currentConfig = null;
+    const WIFI_SETUP_KEY = "eye-care-wifi-setup-at";
+    let wifiSetupRequestedAt = Number(localStorage.getItem(WIFI_SETUP_KEY) || 0);
 
     const $ = (id) => document.getElementById(id);
 
@@ -1001,9 +1095,42 @@
       const parsed = parseTimestamp(telemetry.ts);
       const ageSeconds = parsed ? (Date.now() - parsed.getTime()) / 1000 : Infinity;
       setStatus(ageSeconds < 30, ageSeconds < 30 ? "设备在线" : "等待设备");
-      $("network-copy").textContent = ageSeconds < 30
-        ? `设备最近一次上传 ${timeText(telemetry.ts)}，当前连接正常。`
-        : `最后上传 ${timeText(telemetry.ts)}，请检查 ESP32 的 2.4 GHz Wi-Fi。`;
+    }
+
+    function renderNetwork(network, telemetry) {
+      const parsed = telemetry ? parseTimestamp(telemetry.ts) : null;
+      const online = parsed ? (Date.now() - parsed.getTime()) / 1000 < 30 : false;
+      const result = $("network-result");
+      result.classList.remove("waiting", "offline");
+      if (online) {
+        $("network-title").textContent = network && network.wifi_ssid
+          ? `已连接 ${network.wifi_ssid}`
+          : "设备连接正常";
+        const ipCopy = network && network.wifi_ip
+          ? `设备 IP ${network.wifi_ip} · `
+          : "";
+        $("network-copy").textContent =
+          `${ipCopy}最近上传 ${timeText(telemetry.ts)}，云端通信正常。`;
+        if (wifiSetupRequestedAt && Date.now() - wifiSetupRequestedAt < 15 * 60 * 1000) {
+          $("wifi-success-banner").hidden = false;
+          localStorage.removeItem(WIFI_SETUP_KEY);
+          wifiSetupRequestedAt = 0;
+        }
+      } else if (
+        wifiSetupRequestedAt &&
+        Date.now() - wifiSetupRequestedAt < 15 * 60 * 1000
+      ) {
+        result.classList.add("waiting");
+        $("network-title").textContent = "正在等待设备连接新 Wi-Fi";
+        $("network-copy").textContent =
+          "设备暂时离线。请确认目标网络为 2.4 GHz 且可以直接访问互联网。";
+      } else {
+        result.classList.add("offline");
+        $("network-title").textContent = "设备当前离线";
+        $("network-copy").textContent = telemetry
+          ? `最后上传 ${timeText(telemetry.ts)}，请重新配网或检查路由器。`
+          : "尚无可用的设备网络信息。";
+      }
     }
 
     function renderChart(items) {
@@ -1159,8 +1286,10 @@
         target.textContent = result.status === "acked"
           ? successText
           : `指令已发送，当前状态：${result.status}`;
+        return result.status === "acked";
       } catch (error) {
         target.textContent = "设备指令发送失败。";
+        return false;
       } finally {
         setButtonBusy(button, false);
       }
@@ -1227,13 +1356,15 @@
     async function refresh() {
       try {
         if (!token) await login();
-        const [latest, history] = await Promise.all([
+        const [latest, history, network] = await Promise.all([
           api(`/devices/${DEVICE_ID}/latest`),
-          api(`/devices/${DEVICE_ID}/history?limit=120`)
+          api(`/devices/${DEVICE_ID}/history?limit=120`),
+          api(`/devices/${DEVICE_ID}/network`)
         ]);
         renderLatest(latest);
         renderChart(history.items || []);
         renderHistory(history.items || []);
+        renderNetwork(network, latest.telemetry);
       } catch (error) {
         setStatus(false, "云端断开");
         $("message").textContent = "暂时无法连接云端，正在自动重试。";
@@ -1311,14 +1442,23 @@
         "上传间隔已由设备确认更新。"
       );
     });
-    $("start-wifi-setup").addEventListener("click", () => {
-      commandAction(
+    $("start-wifi-setup").addEventListener("click", async () => {
+      wifiSetupRequestedAt = Date.now();
+      localStorage.setItem(WIFI_SETUP_KEY, String(wifiSetupRequestedAt));
+      const ok = await commandAction(
         $("start-wifi-setup"),
         "wifi_setup",
         {},
         "network-message",
         "配网热点已开启：连接无密码的 EyeCare-Setup，然后打开 192.168.4.1。"
       );
+      if (!ok) {
+        localStorage.removeItem(WIFI_SETUP_KEY);
+        wifiSetupRequestedAt = 0;
+      }
+    });
+    $("dismiss-wifi-success").addEventListener("click", () => {
+      $("wifi-success-banner").hidden = true;
     });
     document.querySelectorAll(".tab-button").forEach((button) => {
       button.addEventListener("click", () => activateTab(button.dataset.tab));

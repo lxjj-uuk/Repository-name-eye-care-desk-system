@@ -37,6 +37,8 @@ class TelemetryIn(BaseModel):
     last_motion_min: Optional[int] = Field(default=None, ge=0, le=1440)
     risk: Optional[float] = Field(default=None, ge=0, le=1)
     risk_level: Optional[str] = None
+    wifi_ssid: Optional[str] = None
+    wifi_ip: Optional[str] = None
 
 
 class TelemetryOut(ORMModel):
@@ -135,6 +137,13 @@ class LatestOut(BaseModel):
     device_id: str
     telemetry: Optional[TelemetryOut] = None
     config: Optional[ThresholdOut] = None
+
+
+class NetworkStatusOut(ORMModel):
+    device_id: str
+    wifi_ssid: Optional[str] = None
+    wifi_ip: Optional[str] = None
+    updated_at: Optional[datetime] = None
 
 
 class HistoryOut(BaseModel):

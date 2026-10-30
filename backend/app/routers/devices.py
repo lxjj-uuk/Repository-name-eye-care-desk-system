@@ -6,13 +6,22 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Command, Device, DeviceConfig, Event, Telemetry, utcnow
+from ..models import (
+    Command,
+    Device,
+    DeviceConfig,
+    DeviceNetwork,
+    Event,
+    Telemetry,
+    utcnow,
+)
 from ..schemas import (
     DeviceOut,
     EventListOut,
     EventOut,
     HistoryOut,
     LatestOut,
+    NetworkStatusOut,
     TelemetryOut,
     ThresholdOut,
     ThresholdUpdate,
@@ -74,6 +83,15 @@ def latest(device_id: str, db: Session = Depends(get_db)):
         telemetry=TelemetryOut.model_validate(row) if row else None,
         config=ThresholdOut.model_validate(config) if config else None,
     )
+
+
+@router.get("/{device_id}/network", response_model=NetworkStatusOut)
+def network_status(device_id: str, db: Session = Depends(get_db)):
+    ensure_device(db, device_id)
+    status = db.get(DeviceNetwork, device_id)
+    if status is None:
+        return NetworkStatusOut(device_id=device_id)
+    return status
 
 
 @router.get("/{device_id}/history", response_model=HistoryOut)

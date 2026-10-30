@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Command, Event, Telemetry, utcnow
+from ..models import Command, DeviceNetwork, Event, Telemetry, utcnow
 from ..schemas import CommandAck, CommandOut, EventIn, EventOut, TelemetryIn, TelemetryOut
 from ..security import require_token
 from .devices import ensure_device, get_config
@@ -44,6 +44,17 @@ def store_telemetry(body: TelemetryIn, db: Session):
         risk_level=body.risk_level,
     )
     db.add(row)
+
+    if body.wifi_ssid or body.wifi_ip:
+        network = db.get(DeviceNetwork, body.device_id)
+        if network is None:
+            network = DeviceNetwork(device_id=body.device_id)
+            db.add(network)
+        if body.wifi_ssid:
+            network.wifi_ssid = body.wifi_ssid
+        if body.wifi_ip:
+            network.wifi_ip = body.wifi_ip
+        network.updated_at = utcnow()
 
     config = get_config(db, body.device_id)
     if body.lux is not None:

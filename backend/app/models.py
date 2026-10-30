@@ -56,6 +56,19 @@ class DeviceConfig(Base):
     device = relationship("Device", back_populates="config")
 
 
+class DeviceNetwork(Base):
+    __tablename__ = "device_networks"
+
+    device_id = Column(
+        String(64),
+        ForeignKey("devices.device_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    wifi_ssid = Column(String(128))
+    wifi_ip = Column(String(64))
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
 class Telemetry(Base):
     __tablename__ = "telemetry"
 
