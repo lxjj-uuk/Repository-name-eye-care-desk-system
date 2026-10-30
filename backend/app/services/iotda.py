@@ -5,22 +5,16 @@ import time
 from typing import Any, Dict
 import uuid
 
-import paho.mqtt.client as mqtt
-from huaweicloudsdkcore.auth.credentials import BasicCredentials
-from huaweicloudsdkiotda.v5 import (
-    CreateCommandRequest,
-    DeviceCommandRequest,
-    ShowDeviceShadowRequest,
-)
-from huaweicloudsdkiotda.v5.iotda_client import IoTDAClient
-
 from ..config import settings
 
 
 logger = logging.getLogger(__name__)
 
 
-def _client() -> IoTDAClient:
+def _client():
+    from huaweicloudsdkcore.auth.credentials import BasicCredentials
+    from huaweicloudsdkiotda.v5.iotda_client import IoTDAClient
+
     if not settings.iotda_configured:
         raise RuntimeError(
             "IoTDA is not configured: set IOTDA_ACCESS_KEY, "
@@ -40,6 +34,8 @@ def _client() -> IoTDAClient:
 
 
 def fetch_device_shadow(device_id: str) -> Dict[str, Any]:
+    from huaweicloudsdkiotda.v5 import ShowDeviceShadowRequest
+
     request = ShowDeviceShadowRequest(
         device_id=device_id,
         instance_id=settings.iotda_instance_id or None,
@@ -79,6 +75,8 @@ def send_command(
         }
 
     if settings.iotda_app_mqtt_configured:
+        import paho.mqtt.client as mqtt
+
         request_id = str(uuid.uuid4())
         timestamp = str(int(time.time() * 1000))
         username = (
@@ -140,6 +138,11 @@ def send_command(
             "request_id": request_id,
             "result": "published",
         }
+
+    from huaweicloudsdkiotda.v5 import (
+        CreateCommandRequest,
+        DeviceCommandRequest,
+    )
 
     request = CreateCommandRequest(
         device_id=device_id,
