@@ -258,6 +258,8 @@ def test_guardian_trigger():
     )
     memory = UserMemory(
         device_id="hi3861_001",
+        work_start_hour=0,
+        work_end_hour=0,
         quiet_start_hour=22,
         quiet_end_hour=8,
     )

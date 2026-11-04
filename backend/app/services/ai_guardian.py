@@ -39,6 +39,10 @@ def should_trigger_guardian(
     if not row.occupied:
         return False
     local_hour = row.ts.replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ).hour
+    work_start = memory.work_start_hour if memory.work_start_hour is not None else 9
+    work_end = memory.work_end_hour if memory.work_end_hour is not None else 18
+    if not _inside_window(local_hour, work_start, work_end):
+        return False
     if _inside_window(local_hour, memory.quiet_start_hour, memory.quiet_end_hour):
         return False
     return bool(

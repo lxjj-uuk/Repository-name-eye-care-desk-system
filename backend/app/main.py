@@ -63,7 +63,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Eye Care Desk API",
     description="工位用眼健康与桌面微环境监护系统后端",
-    version="0.2.1",
+    version="0.2.2",
     lifespan=lifespan,
 )
 
@@ -101,7 +101,7 @@ def health():
     return {
         "status": "ok",
         "service": "eye-care-api",
-        "version": "0.2.1",
+        "version": "0.2.2",
         "ai": {
             "local_available": local_llm_available(),
             "local_model": get_model_name() if local_llm_available() else None,

@@ -4191,6 +4191,13 @@
       letter-spacing: -.025em;
     }
 
+    .settings-description {
+      margin: -10px 0 18px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
     .field-grid {
       gap: 17px 14px;
     }
@@ -4201,7 +4208,8 @@
       font-weight: 600;
     }
 
-    .field input {
+    .field input,
+    .field select {
       width: 100%;
       height: 50px;
       padding: 0 14px;
@@ -4216,6 +4224,21 @@
       -webkit-text-fill-color: var(--ink);
     }
 
+    .field select {
+      appearance: none;
+      padding-right: 36px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+        linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+      background-position:
+        calc(100% - 19px) 22px,
+        calc(100% - 14px) 22px;
+      background-repeat: no-repeat;
+      background-size: 5px 5px, 5px 5px;
+      cursor: pointer;
+      -webkit-text-fill-color: var(--ink);
+    }
+
     .field input[type="number"] {
       appearance: textfield;
       -moz-appearance: textfield;
@@ -4227,9 +4250,39 @@
       appearance: none;
     }
 
-    .field input:focus {
+    .field input:focus,
+    .field select:focus {
       border-color: var(--blue);
       box-shadow: 0 0 0 3px rgba(39, 73, 232, .12);
+    }
+
+    .field-hint,
+    .control-note {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.55;
+    }
+
+    .operation-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .operation-card {
+      padding: 12px;
+      background: #eef1eb;
+      border-radius: 16px;
+    }
+
+    .operation-card button {
+      width: 100%;
+    }
+
+    .control-note {
+      min-height: 42px;
+      margin-top: 8px;
     }
 
     .action-row {
@@ -5073,24 +5126,28 @@
 
         <div class="settings-group">
           <h3 class="settings-heading">提醒阈值</h3>
+          <p class="settings-description">
+            当照度低于、高于设定范围，或连续久坐达到提醒时间时，系统会触发环境提醒。
+          </p>
           <div class="field-grid">
             <div class="field">
-              <label for="lux-min">最低照度 lux</label>
+              <label for="lux-min">光线不足阈值（lux）</label>
               <input id="lux-min" inputmode="numeric" type="number" min="0" max="200000">
             </div>
             <div class="field">
-              <label for="lux-max">最高照度 lux</label>
+              <label for="lux-max">光线过强阈值（lux）</label>
               <input id="lux-max" inputmode="numeric" type="number" min="0" max="200000">
             </div>
             <div class="field">
-              <label for="sit-warn">久坐提醒分钟</label>
+              <label for="sit-warn">首次久坐提醒（分钟）</label>
               <input id="sit-warn" inputmode="numeric" type="number" min="1" max="240">
             </div>
             <div class="field">
-              <label for="sit-strong">强提醒分钟</label>
+              <label for="sit-strong">连续久坐强提醒（分钟）</label>
               <input id="sit-strong" inputmode="numeric" type="number" min="1" max="240">
             </div>
           </div>
+          <p class="field-hint">建议桌面照明保持在 300–1000 lux；久坐提醒可按个人习惯调整为 30–60 分钟。</p>
           <div class="action-row">
             <button id="save-thresholds" class="action-button" type="button">保存并下发</button>
             <button id="reload-settings" class="secondary-button" type="button">重新读取</button>
@@ -5100,14 +5157,24 @@
 
         <div class="settings-group">
           <h3 class="settings-heading">设备操作</h3>
-          <div class="action-row">
-            <button id="test-buzzer" class="action-button" type="button">测试蜂鸣器</button>
-            <button id="reset-sitting" class="secondary-button" type="button">重置久坐</button>
+          <p class="settings-description">
+            用于检查硬件和手动修正当前状态。操作会立即通过云端发送到设备。
+          </p>
+          <div class="operation-grid">
+            <div class="operation-card">
+              <button id="test-buzzer" class="action-button" type="button">测试蜂鸣器</button>
+              <p class="control-note">检查云端到设备的提醒链路，不会修改提醒阈值。</p>
+            </div>
+            <div class="operation-card">
+              <button id="reset-sitting" class="secondary-button" type="button">重置久坐</button>
+              <p class="control-note">把连续和累计久坐时间清零；有人时仍会重新计时。</p>
+            </div>
           </div>
           <div class="field" style="margin-top: 14px; max-width: 180px;">
-            <label for="report-interval">上传间隔 秒</label>
+            <label for="report-interval">数据上传间隔（秒）</label>
             <input id="report-interval" inputmode="numeric" type="number" min="5" max="3600" value="5">
           </div>
+          <p class="field-hint">数值越小，网页更新越快；日常使用建议 15–30 秒，减少功耗和流量。</p>
           <button id="save-interval" class="secondary-button" type="button" style="margin-top: 10px; width: 100%;">更新上传间隔</button>
           <p id="device-message" class="settings-hint" role="status" aria-live="polite"></p>
         </div>
@@ -5135,24 +5202,27 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="settings-heading">AI 记忆</h3>
+          <h3 class="settings-heading">AI 偏好与免打扰</h3>
+          <p class="settings-description">
+            AI 只会在工作时段内主动巡检；免打扰时段内不会生成即时蜂鸣提醒。
+          </p>
           <p id="memory-summary" class="settings-hint">正在读取个性化偏好…</p>
           <div class="field-grid" style="margin-top: 15px;">
             <div class="field">
-              <label for="work-start">工作开始小时</label>
-              <input id="work-start" inputmode="numeric" type="number" min="0" max="23">
+              <label for="work-start">工作开始时间</label>
+              <select id="work-start" class="time-select" aria-label="工作开始时间"></select>
             </div>
             <div class="field">
-              <label for="work-end">工作结束小时</label>
-              <input id="work-end" inputmode="numeric" type="number" min="0" max="23">
+              <label for="work-end">工作结束时间</label>
+              <select id="work-end" class="time-select" aria-label="工作结束时间"></select>
             </div>
             <div class="field">
-              <label for="quiet-start">免打扰开始</label>
-              <input id="quiet-start" inputmode="numeric" type="number" min="0" max="23">
+              <label for="quiet-start">免打扰开始时间</label>
+              <select id="quiet-start" class="time-select" aria-label="免打扰开始时间"></select>
             </div>
             <div class="field">
-              <label for="quiet-end">免打扰结束</label>
-              <input id="quiet-end" inputmode="numeric" type="number" min="0" max="23">
+              <label for="quiet-end">免打扰结束时间</label>
+              <select id="quiet-end" class="time-select" aria-label="免打扰结束时间"></select>
             </div>
           </div>
           <button id="save-memory" class="secondary-button" type="button" style="margin-top: 18px; width: 100%;">
@@ -5383,6 +5453,19 @@
       $("report-interval").value = config.report_interval || 5;
     }
 
+    function initTimeSelects() {
+      ["work-start", "work-end", "quiet-start", "quiet-end"].forEach((id) => {
+        const select = $(id);
+        select.replaceChildren();
+        for (let hour = 0; hour < 24; hour += 1) {
+          const option = document.createElement("option");
+          option.value = String(hour);
+          option.textContent = `${String(hour).padStart(2, "0")}:00`;
+          select.append(option);
+        }
+      });
+    }
+
     function fillMemory(memory) {
       const preferenceLabel = {
         buzzer: "更接受即时蜂鸣",
@@ -5393,10 +5476,10 @@
       $("memory-summary").textContent =
         `${preferenceLabel} · 蜂鸣接受度 ${Math.round(memory.buzzer_acceptance * 100)}% · ` +
         `已处理 ${stats.handled || 0} 次，没有帮助 ${stats.not_helpful || 0} 次`;
-      $("work-start").value = memory.work_start_hour;
-      $("work-end").value = memory.work_end_hour;
-      $("quiet-start").value = memory.quiet_start_hour;
-      $("quiet-end").value = memory.quiet_end_hour;
+      $("work-start").value = String(memory.work_start_hour);
+      $("work-end").value = String(memory.work_end_hour);
+      $("quiet-start").value = String(memory.quiet_start_hour);
+      $("quiet-end").value = String(memory.quiet_end_hour);
     }
 
     async function loadSettings() {
@@ -5497,7 +5580,7 @@
       if (Object.values(update).some((value) =>
         !Number.isInteger(value) || value < 0 || value > 23
       )) {
-        message.textContent = "时间必须填写 0-23 的整点小时。";
+        message.textContent = "请重新选择有效的工作时间和免打扰时间。";
         return;
       }
       setButtonBusy(button, true, "保存中…");
@@ -5940,6 +6023,7 @@
     window.addEventListener("hashchange", () => {
       activateTab(window.location.hash.substring(1));
     });
+    initTimeSelects();
     activateTab(window.location.hash.substring(1) || "live");
     updateClock();
     refresh();
