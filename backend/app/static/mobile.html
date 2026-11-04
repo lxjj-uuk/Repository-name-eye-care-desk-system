@@ -4513,6 +4513,15 @@
       border-top: 1px solid rgba(21, 35, 30, .1);
     }
 
+    .report-subsection.guardian-focus {
+      animation: guardianFocus 1.4s ease-out;
+    }
+
+    @keyframes guardianFocus {
+      0%, 100% { filter: none; }
+      24% { filter: drop-shadow(0 0 14px rgba(39, 73, 232, .2)); }
+    }
+
     .report-subsection h3 {
       margin: 0 0 12px;
       color: var(--ink);
@@ -5418,7 +5427,7 @@
 
     async function waitForCommand(command) {
       let current = command;
-      for (let attempt = 0; attempt < 15; attempt += 1) {
+      for (let attempt = 0; attempt < 45; attempt += 1) {
         if (["acked", "failed", "cancelled"].includes(current.status)) break;
         await new Promise((resolve) => setTimeout(resolve, 1000));
         current = await api(`/commands/${current.id}`);
@@ -5647,8 +5656,8 @@
             await api(`/commands/${item.command_id}/confirm`, { method: "POST" });
             const result = await waitForCommand({ id: item.command_id });
             if (result.status === "acked") {
-              confirm.textContent = "设备已执行";
-              status.textContent = "ESP32 已返回 ACK，动作执行完成。";
+              confirm.textContent = "命令已确认";
+              status.textContent = "ESP32 已返回 ACK，蜂鸣命令已转发到 Hi3861。";
               item.status = "acked";
             } else {
               confirm.textContent = "重新确认";
@@ -5667,8 +5676,8 @@
           api(`/commands/${item.command_id}`).then((command) => {
             if (command.status === "acked") {
               confirm.disabled = true;
-              confirm.textContent = "设备已执行";
-              status.textContent = "ESP32 已返回 ACK，动作执行完成。";
+              confirm.textContent = "命令已确认";
+              status.textContent = "ESP32 已返回 ACK，蜂鸣命令已转发到 Hi3861。";
             } else if (command.status === "sent") {
               confirm.disabled = true;
               confirm.textContent = "等待设备确认";
@@ -5906,6 +5915,14 @@
       }
       $("ai-guardian-banner").hidden = true;
       activateTab("report");
+      window.setTimeout(() => {
+        const section = $("report-action-section");
+        if (section && !section.hidden) {
+          section.scrollIntoView({ behavior: "smooth", block: "center" });
+          section.classList.add("guardian-focus");
+          window.setTimeout(() => section.classList.remove("guardian-focus"), 1500);
+        }
+      }, 450);
     });
     $("ai-guardian-dismiss").addEventListener("click", () => {
       if (guardianCurrentKey) {
