@@ -587,8 +587,7 @@ def _fallback_actions(
     time_context = context.get("time_context") or {}
     memory = context.get("user_memory") or {}
     if (
-        level == "low"
-        or not current.get("occupied")
+        not current.get("occupied")
         or (context.get("data_quality") or {}).get("device_online") is False
         or not config
         or not config.buzzer_enabled

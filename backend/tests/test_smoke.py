@@ -20,6 +20,8 @@ os.environ["LOCAL_LLM_MODEL_PATH"] = "Z:/missing-eye-care-model.gguf"
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
+from app.models import DeviceConfig  # noqa: E402
+from app.services.ai_report import _fallback_actions  # noqa: E402
 
 
 def test_health():
@@ -217,7 +219,27 @@ def test_full_flow():
         assert thresholds.json()["lux_min"] == 140
 
 
+def test_low_risk_warning_can_propose_action():
+    actions = _fallback_actions(
+        "low",
+        [{"key": "light", "level": "warn", "fact": "low light"}],
+        {
+            "current": {"occupied": True},
+            "time_context": {"is_quiet_time": False},
+            "data_quality": {"device_online": True},
+            "user_memory": {"preferred_reminder": "balanced"},
+        },
+        DeviceConfig(
+            device_id="hi3861_001",
+            buzzer_enabled=True,
+        ),
+    )
+    assert actions
+    assert actions[0]["tool"] == "buzz"
+
+
 if __name__ == "__main__":
     test_health()
+    test_low_risk_warning_can_propose_action()
     test_full_flow()
     print("smoke tests passed")
