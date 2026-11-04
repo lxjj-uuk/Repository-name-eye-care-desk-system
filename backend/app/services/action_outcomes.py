@@ -116,7 +116,10 @@ def verify_outcome(db: Session, outcome: models.ActionOutcome) -> bool:
     command = db.get(models.Command, outcome.command_id)
     latest = (
         db.query(models.Telemetry)
-        .filter(models.Telemetry.device_id == outcome.device_id)
+        .filter(
+            models.Telemetry.device_id == outcome.device_id,
+            models.Telemetry.ts > outcome.created_at,
+        )
         .order_by(models.Telemetry.ts.desc())
         .first()
     )
