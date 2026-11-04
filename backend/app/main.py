@@ -9,7 +9,9 @@ from fastapi.responses import FileResponse, RedirectResponse
 from . import models
 from .config import settings
 from .db import Base, SessionLocal, engine
-from .routers import auth, commands, devices, ingest, reports
+from .routers import auth, commands, devices, feedback, ingest, reports
+from .services.ai_tools import TOOL_DEFINITIONS
+from .services.knowledge import load_knowledge
 from .services.local_llm import get_model_name, is_available as local_llm_available
 
 
@@ -47,7 +49,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Eye Care Desk API",
     description="工位用眼健康与桌面微环境监护系统后端",
-    version="0.1.0",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
@@ -64,6 +66,7 @@ app.include_router(devices.router)
 app.include_router(commands.router)
 app.include_router(commands.actions)
 app.include_router(reports.router)
+app.include_router(feedback.router)
 app.include_router(ingest.router)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -84,10 +87,13 @@ def health():
     return {
         "status": "ok",
         "service": "eye-care-api",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "ai": {
             "local_available": local_llm_available(),
             "local_model": get_model_name() if local_llm_available() else None,
             "remote_configured": bool(settings.llm_api_url),
+            "rag_documents": len(load_knowledge()),
+            "tools": [item["name"] for item in TOOL_DEFINITIONS],
+            "feedback_memory": True,
         },
     }

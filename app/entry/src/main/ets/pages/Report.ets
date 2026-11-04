@@ -1,6 +1,14 @@
 import { ApiClient } from '../common/ApiClient';
 import { AppConfig } from '../common/AppConfig';
-import { AiInsight, CommandInfo, DailyReport, ReportData } from '../common/Models';
+import {
+  AiEvidence,
+  AiInsight,
+  CommandInfo,
+  DailyReport,
+  KnowledgeSource,
+  ProposedAction,
+  ReportData
+} from '../common/Models';
 
 @Component
 export struct ReportPage {
@@ -12,6 +20,8 @@ export struct ReportPage {
   @State message: string = '';
   @State pending: CommandInfo[] = [];
   @State reportRevision: number = 0;
+  @State feedbackSent: string = '';
+  @State feedbackMessage: string = '';
 
   aboutToAppear(): void {
     this.reportDate = this.today();
@@ -49,6 +59,8 @@ export struct ReportPage {
       }
       this.report = loadedReport;
       this.reportRevision += 1;
+      this.feedbackSent = '';
+      this.feedbackMessage = '';
       this.error = '';
       this.message = loadedReport.data.source === 'llm'
         ? `分析已更新：${this.sourceLabel(loadedReport.data.source, loadedReport.data.model, loadedReport.data.engine)}`
@@ -73,6 +85,8 @@ export struct ReportPage {
       const analyzedReport = await ApiClient.generateAiReport(this.reportDate);
       this.report = analyzedReport;
       this.reportRevision += 1;
+      this.feedbackSent = '';
+      this.feedbackMessage = '';
       this.error = '';
       if (AppConfig.useMockData) {
         this.message = '演示模式：AI 报告已生成';
@@ -125,6 +139,24 @@ export struct ReportPage {
       await this.loadPending();
     } catch (err) {
       this.error = this.errorText(err);
+    }
+  }
+
+  async sendFeedback(type: string): Promise<void> {
+    if (!this.report || this.feedbackSent.length > 0) {
+      return;
+    }
+    let commandId = 0;
+    const actions = this.report.data.proposed_actions ?? [];
+    if (actions.length > 0 && actions[0].command_id) {
+      commandId = actions[0].command_id;
+    }
+    try {
+      await ApiClient.sendFeedback(this.report.id, commandId, type);
+      this.feedbackSent = type;
+      this.feedbackMessage = '反馈已记录，下次分析会参考你的偏好';
+    } catch (err) {
+      this.feedbackMessage = this.errorText(err);
     }
   }
 
@@ -222,6 +254,89 @@ export struct ReportPage {
   }
 
   @Builder
+  evidenceCard(item: AiEvidence) {
+    Row({ space: 9 }) {
+      Text('✓')
+        .fontSize(11)
+        .fontColor('#2749E8')
+      Column({ space: 3 }) {
+        Text(item.fact)
+          .fontSize(11)
+          .fontColor('#53625C')
+          .lineHeight(18)
+        if (item.knowledge_ids && item.knowledge_ids.length > 0) {
+          Text(item.knowledge_ids.map((id: string) => `[${id}]`).join(' '))
+            .fontSize(9)
+            .fontColor('#2749E8')
+        }
+      }
+      .layoutWeight(1)
+      .alignItems(HorizontalAlign.Start)
+    }
+    .width('100%')
+    .padding(12)
+    .backgroundColor('#EEF1EB')
+    .borderRadius(14)
+  }
+
+  @Builder
+  knowledgeCard(item: KnowledgeSource) {
+    Column({ space: 4 }) {
+      Text(`[${item.id}] ${item.title}`)
+        .fontSize(12)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#1B2430')
+      Text(item.source)
+        .fontSize(9)
+        .fontColor('#7B8982')
+      Text(item.excerpt)
+        .fontSize(10)
+        .fontColor('#53625C')
+        .lineHeight(16)
+    }
+    .width('100%')
+    .padding(13)
+    .backgroundColor('#FFF4E1')
+    .borderRadius(14)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
+  proposedActionCard(action: ProposedAction) {
+    Column({ space: 8 }) {
+      Text('需要你确认')
+        .fontSize(9)
+        .fontColor('#D9FF57')
+      Text(action.label)
+        .fontSize(20)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#FFFFFF')
+      Text(action.reason)
+        .fontSize(10)
+        .fontColor('#B9C9C1')
+        .lineHeight(16)
+      if (action.command_id && action.command_id > 0) {
+        Button('确认执行')
+          .width('100%')
+          .height(42)
+          .fontSize(11)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#142820')
+          .backgroundColor('#D9FF57')
+          .borderRadius(12)
+          .onClick(() => {
+            this.confirmPending(action.command_id as number);
+          })
+      }
+    }
+    .width('100%')
+    .padding(16)
+    .backgroundColor('#142820')
+    .borderRadius(18)
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  @Builder
   statBlock(label: string, value: string) {
     Column({ space: 4 }) {
       Text(label)
@@ -290,6 +405,36 @@ export struct ReportPage {
     }
     .width('100%')
 
+    if (data.evidence && data.evidence.length > 0) {
+      Column({ space: 8 }) {
+        Text('判断依据')
+          .fontSize(15)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1B2430')
+          .width('100%')
+        ForEach(data.evidence, (item: AiEvidence) => {
+          this.evidenceCard(item)
+        }, (item: AiEvidence) => item.fact)
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+
+    if (data.knowledge_sources && data.knowledge_sources.length > 0) {
+      Column({ space: 8 }) {
+        Text('知识来源')
+          .fontSize(15)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1B2430')
+          .width('100%')
+        ForEach(data.knowledge_sources, (item: KnowledgeSource) => {
+          this.knowledgeCard(item)
+        }, (item: KnowledgeSource) => item.id)
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+
     Column({ space: 6 }) {
       Row() {
         Text('AI 原因分析')
@@ -348,6 +493,72 @@ export struct ReportPage {
       .width('100%')
       .alignItems(HorizontalAlign.Start)
     }
+
+    if (data.proposed_actions && data.proposed_actions.length > 0) {
+      Column({ space: 8 }) {
+        Text('AI 提议')
+          .fontSize(15)
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1B2430')
+          .width('100%')
+        ForEach(data.proposed_actions, (action: ProposedAction) => {
+          this.proposedActionCard(action)
+        }, (action: ProposedAction) => action.tool)
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+    }
+
+    Column({ space: 8 }) {
+      Text('这次建议有帮助吗？')
+        .fontSize(14)
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#1B2430')
+        .width('100%')
+      Row({ space: 8 }) {
+        Button(this.feedbackSent === 'handled' ? '已记录' : '已处理')
+          .layoutWeight(1)
+          .height(36)
+          .fontSize(10)
+          .fontColor(this.feedbackSent === 'handled' ? '#2749E8' : '#53625C')
+          .backgroundColor(this.feedbackSent === 'handled' ? '#E9EBFF' : '#EEF1EB')
+          .borderRadius(18)
+          .enabled(this.feedbackSent.length === 0)
+          .onClick(() => {
+            this.sendFeedback('handled');
+          })
+        Button(this.feedbackSent === 'later' ? '已记录' : '稍后提醒')
+          .layoutWeight(1)
+          .height(36)
+          .fontSize(10)
+          .fontColor(this.feedbackSent === 'later' ? '#2749E8' : '#53625C')
+          .backgroundColor(this.feedbackSent === 'later' ? '#E9EBFF' : '#EEF1EB')
+          .borderRadius(18)
+          .enabled(this.feedbackSent.length === 0)
+          .onClick(() => {
+            this.sendFeedback('later');
+          })
+        Button(this.feedbackSent === 'not_helpful' ? '已记录' : '没帮助')
+          .layoutWeight(1)
+          .height(36)
+          .fontSize(10)
+          .fontColor(this.feedbackSent === 'not_helpful' ? '#2749E8' : '#53625C')
+          .backgroundColor(this.feedbackSent === 'not_helpful' ? '#E9EBFF' : '#EEF1EB')
+          .borderRadius(18)
+          .enabled(this.feedbackSent.length === 0)
+          .onClick(() => {
+            this.sendFeedback('not_helpful');
+          })
+      }
+      .width('100%')
+      if (this.feedbackMessage.length > 0) {
+        Text(this.feedbackMessage)
+          .fontSize(9)
+          .fontColor('#7B8982')
+      }
+    }
+    .width('100%')
+    .alignItems(HorizontalAlign.Start)
   }
 
   @Builder

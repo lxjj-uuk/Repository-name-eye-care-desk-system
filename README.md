@@ -16,7 +16,9 @@ BH1750 / DHT20 / 人体感应
             |
       SQLite / PostgreSQL
             |
-    本地 Qwen 模型 / 规则风险回退
+  真实上下文 + RAG + 工具白名单 + 反馈记忆
+            |
+    云端 LLM / 本地 Qwen / 规则风险回退
             |
        HarmonyOS App
 ```
@@ -29,6 +31,8 @@ BH1750 / DHT20 / 人体感应
 - `firmware/demo/50_eye_care/`：Hi3861 本地传感器固件
 - `gateway/esp32/`：ESP32 BLE 配网与 UART/WiFi 网关
 - `backend/`：FastAPI、数据库、遥测、命令与 AI 日报
+- `knowledge/`：带来源的工位健康 RAG 知识库
+- `mcp/`：受控工具层，控制命令必须由用户确认
 - `app/`：HarmonyOS App
 - `scripts/`：本地环境启动、停止和防火墙脚本
 - `docs/本地部署说明.md`：本地部署步骤
@@ -56,6 +60,10 @@ API：  http://39.106.195.83:8080
 文档： http://39.106.195.83:8080/docs
 AI：   Kimi kimi-k3.1-pro
 ```
+
+AI 报告会结合最新遥测、近期曲线、阈值、时间段、最近命令结果、
+用户反馈记忆和 2–3 条知识来源。详细设计见
+`docs/AI增强与工具闭环.md`。
 
 云端使用阿里云轻量应用服务器、SQLite 和系统服务 `eye-care-api`。
 完整说明见 `docs/云端部署说明.md`。

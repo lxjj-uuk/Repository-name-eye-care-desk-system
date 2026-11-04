@@ -57,18 +57,14 @@ class BackendClient:
     def _ai_report(self, device_id: str, date: str) -> Dict[str, Any]:
         try:
             return self.request(
-                "POST",
-                f"/devices/{device_id}/reports/ai",
+                "GET",
+                f"/devices/{device_id}/reports/daily",
                 params={"date": date},
             )
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code != 404:
                 raise
-            return self.request(
-                "GET",
-                f"/devices/{device_id}/reports/daily",
-                params={"date": date},
-            )
+            return {}
 
     def get_today_summary(self, device_id: str, date: str) -> Dict[str, Any]:
         report = self._ai_report(device_id, date)
@@ -153,30 +149,21 @@ class BackendClient:
         if not payload:
             return {"error": "至少提供一个阈值参数"}
 
-        config = self.request(
-            "PUT",
-            f"/devices/{device_id}/thresholds",
-            json=payload,
-        )
-        commands = self.request(
-            "GET",
+        command = self.request(
+            "POST",
             f"/devices/{device_id}/commands",
-            params={"limit": 20},
+            json={
+                "command_name": "set_threshold",
+                "params": payload,
+                "requested_by": "mcp",
+            },
         )
-        command_id = None
-        for item in commands:
-            if (
-                item.get("command_name") == "set_threshold"
-                and item.get("status") == "pending"
-            ):
-                command_id = item.get("id")
-                break
         return {
             "confirmation_required": True,
-            "command_id": command_id,
-            "status": "pending",
-            "config": config,
-            "message": "阈值已保存，等待 App 确认后下发到设备",
+            "command_id": command.get("id"),
+            "status": command.get("status"),
+            "command": command,
+            "message": "阈值命令已创建，等待 App 确认后下发到设备",
         }
 
     def buzz(
@@ -193,6 +180,7 @@ class BackendClient:
                     "pattern": pattern,
                     "duration_ms": duration_ms,
                 },
+                "requested_by": "mcp",
             },
         )
         return {

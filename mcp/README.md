@@ -1,6 +1,7 @@
 # Eye Care MCP Server
 
-这是工位用眼健康系统的 MCP 工具层。大模型通过它读取数据、生成建议，并在用户确认后触发设备命令。
+这是工位用眼健康系统的 MCP 工具层。大模型通过它读取数据、生成建议，
+并在用户确认后触发设备命令。报告侧还会使用带来源的本地 RAG 知识和用户反馈记忆。
 
 ## 工具
 
@@ -20,14 +21,14 @@
 先启动 FastAPI：
 
 ```powershell
-cd D:\eye-care\backend
+cd E:\Hi3861\eye-care-desk-system\backend
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 再启动 MCP Server（stdio 模式）：
 
 ```powershell
-cd D:\eye-care\mcp
+cd E:\Hi3861\eye-care-desk-system\mcp
 $env:BACKEND_BASE_URL = 'http://127.0.0.1:8000'
 $env:API_TOKEN = 'dev-token-change-me'
 D:\eye-care\backend\.venv\Scripts\python.exe server.py
@@ -43,8 +44,8 @@ MCP Server 默认使用 stdio，适合被 Codex、Claude Desktop 或其他 MCP �
 {
   "mcpServers": {
     "eye-care-desk": {
-      "command": "D:\\eye-care\\backend\\.venv\\Scripts\\python.exe",
-      "args": ["D:\\eye-care\\mcp\\server.py"],
+      "command": "E:\\Hi3861\\eye-care-desk-system\\backend\\.venv\\Scripts\\python.exe",
+      "args": ["E:\\Hi3861\\eye-care-desk-system\\mcp\\server.py"],
       "env": {
         "BACKEND_BASE_URL": "http://127.0.0.1:8000",
         "API_TOKEN": "dev-token-change-me",

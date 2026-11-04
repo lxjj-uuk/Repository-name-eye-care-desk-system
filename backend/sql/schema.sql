@@ -105,6 +105,45 @@ CREATE TABLE IF NOT EXISTS reports (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS ai_feedback (
+  id INT NOT NULL AUTO_INCREMENT,
+  device_id VARCHAR(64) NOT NULL,
+  report_id INT NULL,
+  command_id INT NULL,
+  feedback_type VARCHAR(32) NOT NULL,
+  note TEXT NULL,
+  context JSON NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_feedback_device_created (device_id, created_at),
+  CONSTRAINT fk_feedback_device
+    FOREIGN KEY (device_id) REFERENCES devices (device_id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_feedback_report
+    FOREIGN KEY (report_id) REFERENCES reports (id)
+    ON DELETE SET NULL,
+  CONSTRAINT fk_feedback_command
+    FOREIGN KEY (command_id) REFERENCES commands (id)
+    ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_memory (
+  device_id VARCHAR(64) NOT NULL,
+  preferred_reminder VARCHAR(32) NOT NULL DEFAULT 'balanced',
+  buzzer_acceptance DECIMAL(4,3) NOT NULL DEFAULT 0.500,
+  work_start_hour INT NOT NULL DEFAULT 9,
+  work_end_hour INT NOT NULL DEFAULT 18,
+  quiet_start_hour INT NOT NULL DEFAULT 22,
+  quiet_end_hour INT NOT NULL DEFAULT 8,
+  feedback_stats JSON NOT NULL,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (device_id),
+  CONSTRAINT fk_memory_device
+    FOREIGN KEY (device_id) REFERENCES devices (device_id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT INTO devices (device_id, name)
 VALUES ('hi3861_001', '工位1')
 ON DUPLICATE KEY UPDATE name = VALUES(name);

@@ -21,9 +21,9 @@
 
 数据库文件为 `backend/eye_care.db`，重启后数据保留。
 
-当前竞赛版 App 和 ESP32 默认连接阿里云，AI 使用
-`kimi-k3.1-pro`。云端服务已经通过真实 ESP32 遥测、AI 日报和蜂鸣器
-ACK 验收。
+当前竞赛版 App 和 ESP32 默认连接阿里云。AI 报告包含真实遥测上下文、
+近期曲线、阈值、最近命令结果、带来源的 RAG 知识、MCP 白名单动作和
+用户反馈记忆。控制动作必须由用户确认，设备返回 ACK 后页面才显示执行完成。
 
 手机网页入口：
 
@@ -48,8 +48,8 @@ powershell -ExecutionPolicy Bypass -File scripts\download-ai-model.ps1
 backend\.venv\Scripts\python -m pip install -r backend\requirements-ai.txt
 ```
 
-模型约 1.1 GB，不包含在源码压缩包中。App 点击“AI 深度分析”时会显示
-分析进度，完成后显示云端模型、生成时间、动态原因分析和行动建议。
+模型约 1.1 GB，不包含在源码压缩包中。App 和网页都会展示判断依据、
+知识来源、AI 提议与反馈入口。详细说明见 `docs/AI增强与工具闭环.md`。
 
 ## 硬件
 

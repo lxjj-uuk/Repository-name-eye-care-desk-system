@@ -61,6 +61,41 @@ export interface CommandInfo {
   acked_at?: string;
 }
 
+export interface AiEvidence {
+  fact: string;
+  level: string;
+  knowledge_ids?: string[];
+}
+
+export interface KnowledgeSource {
+  id: string;
+  knowledge_id?: string;
+  title: string;
+  source: string;
+  url?: string;
+  excerpt: string;
+  score?: number;
+}
+
+export interface ProposedAction {
+  tool: string;
+  command_name?: string;
+  label: string;
+  reason: string;
+  params: Object;
+  command_id?: number;
+  status?: string;
+  confirmation_required?: boolean;
+}
+
+export interface UserMemoryInfo {
+  preferred_reminder: string;
+  buzzer_acceptance: number;
+  work_hours: number[];
+  quiet_hours: number[];
+  feedback_stats: Record<string, number>;
+}
+
 export interface ReportData {
   source?: string;
   model?: string;
@@ -78,6 +113,10 @@ export interface ReportData {
   risk_level?: string;
   insights?: AiInsight[];
   recommendations?: string[];
+  evidence?: AiEvidence[];
+  knowledge_sources?: KnowledgeSource[];
+  proposed_actions?: ProposedAction[];
+  user_memory?: UserMemoryInfo;
 }
 
 export interface AiInsight {

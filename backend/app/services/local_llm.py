@@ -40,6 +40,23 @@ _REPORT_SCHEMA = {
             "maxItems": 2,
             "items": {"type": "string"},
         },
+        "proposed_actions": {
+            "type": "array",
+            "maxItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["tool", "reason", "params"],
+                "properties": {
+                    "tool": {
+                        "type": "string",
+                        "enum": ["buzz", "set_thresholds"],
+                    },
+                    "reason": {"type": "string"},
+                    "params": {"type": "object"},
+                },
+            },
+        },
     },
 }
 

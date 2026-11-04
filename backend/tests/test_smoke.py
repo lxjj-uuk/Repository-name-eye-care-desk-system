@@ -26,7 +26,15 @@ def test_health():
     with TestClient(app) as client:
         response = client.get("/health")
         assert response.status_code == 200
-        assert response.json()["status"] == "ok"
+        health = response.json()
+        assert health["status"] == "ok"
+        assert health["ai"]["rag_documents"] >= 5
+        assert set(health["ai"]["tools"]) >= {
+            "buzz",
+            "set_thresholds",
+            "get_light_curve",
+            "get_sitting_summary",
+        }
         mobile = client.get("/mobile")
         assert mobile.status_code == 200
         assert "Eye Care Desk" in mobile.text
@@ -114,6 +122,99 @@ def test_full_flow():
         assert ai_data["insights"]
         assert ai_data["recommendations"]
         assert ai_data["source"] in {"rule+risk-model", "llm"}
+        assert 2 <= len(ai_data["knowledge_sources"]) <= 3
+        assert ai_data["evidence"]
+        assert ai_data["ai_context"]["current"]["occupied"] is True
+        assert ai_data["ai_context"]["last_command"]["name"] == "buzz"
+        assert {item["tool"] for item in ai_data["tool_trace"]} >= {
+            "get_light_curve",
+            "get_sitting_summary",
+        }
+        assert ai_data["proposed_actions"]
+        action_command_id = ai_data["proposed_actions"][0]["command_id"]
+
+        daily_refresh = client.get(
+            "/devices/hi3861_001/reports/daily",
+            headers=headers,
+            params={"date": date.today().isoformat()},
+        )
+        assert daily_refresh.status_code == 200
+        assert daily_refresh.json()["data"]["insights"] == ai_data["insights"]
+        assert daily_refresh.json()["data"]["knowledge_sources"]
+
+        feedback = client.post(
+            "/devices/hi3861_001/feedback",
+            headers=headers,
+            json={
+                "report_id": ai_report.json()["id"],
+                "command_id": action_command_id,
+                "feedback_type": "handled",
+                "context": {"source": "smoke-test"},
+            },
+        )
+        assert feedback.status_code == 200
+        assert feedback.json()["feedback_type"] == "handled"
+
+        memory = client.get(
+            "/devices/hi3861_001/memory",
+            headers=headers,
+        )
+        assert memory.status_code == 200
+        assert memory.json()["feedback_stats"]["handled"] == 1
+        assert memory.json()["preferred_reminder"] == "buzzer"
+        updated_memory = client.put(
+            "/devices/hi3861_001/memory",
+            headers=headers,
+            json={
+                "work_start_hour": 8,
+                "work_end_hour": 19,
+                "quiet_start_hour": 21,
+                "quiet_end_hour": 7,
+            },
+        )
+        assert updated_memory.status_code == 200
+        assert updated_memory.json()["work_start_hour"] == 8
+        assert updated_memory.json()["quiet_start_hour"] == 21
+
+        ai_action = client.post(
+            f"/commands/{action_command_id}/confirm",
+            headers=headers,
+        )
+        assert ai_action.status_code == 200
+        assert ai_action.json()["status"] == "sent"
+
+        next_report = client.post(
+            "/devices/hi3861_001/reports/ai",
+            headers=headers,
+            params={"date": date.today().isoformat()},
+        )
+        assert next_report.status_code == 200
+        assert (
+            next_report.json()["data"]["ai_context"]["user_memory"][
+                "preferred_reminder"
+            ]
+            == "buzzer"
+        )
+
+        threshold_command = client.post(
+            "/devices/hi3861_001/commands",
+            headers=headers,
+            json={
+                "command_name": "set_threshold",
+                "params": {"lux_min": 140},
+            },
+        )
+        assert threshold_command.status_code == 200
+        threshold_confirm = client.post(
+            f"/commands/{threshold_command.json()['id']}/confirm",
+            headers=headers,
+        )
+        assert threshold_confirm.status_code == 200
+        thresholds = client.get(
+            "/devices/hi3861_001/thresholds",
+            headers=headers,
+        )
+        assert thresholds.json()["lux_min"] == 140
 
 
 if __name__ == "__main__":

@@ -135,12 +135,35 @@ def generate_daily_report(
         )
         .first()
     )
+    previous_data = dict(report.data or {}) if report is not None else {}
+    previous_risk_level = report.risk_level if report is not None else None
     if report is None:
         report = models.Report(device_id=device_id, report_date=report_date)
         db.add(report)
 
+    preserved_keys = (
+        "insights",
+        "recommendations",
+        "source",
+        "model",
+        "engine",
+        "generated_at",
+        "signals",
+        "evidence",
+        "knowledge_sources",
+        "ai_context",
+        "user_memory",
+        "tool_trace",
+        "proposed_actions",
+        "risk",
+        "risk_level",
+    )
+    for key in preserved_keys:
+        if key in previous_data:
+            data[key] = previous_data[key]
+
     report.summary = summary
-    report.risk_level = risk_level
+    report.risk_level = previous_risk_level or risk_level
     report.data = data
     db.commit()
     db.refresh(report)

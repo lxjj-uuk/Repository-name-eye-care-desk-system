@@ -133,6 +133,47 @@ class ReportOut(ORMModel):
     updated_at: datetime
 
 
+class AIFeedbackCreate(BaseModel):
+    report_id: Optional[int] = None
+    command_id: Optional[int] = None
+    feedback_type: str = Field(pattern="^(handled|later|not_helpful)$")
+    note: Optional[str] = Field(default=None, max_length=500)
+    context: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AIFeedbackOut(ORMModel):
+    id: int
+    device_id: str
+    report_id: Optional[int] = None
+    command_id: Optional[int] = None
+    feedback_type: str
+    note: Optional[str] = None
+    context: Dict[str, Any]
+    created_at: datetime
+
+
+class UserMemoryUpdate(BaseModel):
+    preferred_reminder: Optional[str] = Field(
+        default=None, pattern="^(buzzer|visual|balanced)$"
+    )
+    work_start_hour: Optional[int] = Field(default=None, ge=0, le=23)
+    work_end_hour: Optional[int] = Field(default=None, ge=0, le=23)
+    quiet_start_hour: Optional[int] = Field(default=None, ge=0, le=23)
+    quiet_end_hour: Optional[int] = Field(default=None, ge=0, le=23)
+
+
+class UserMemoryOut(ORMModel):
+    device_id: str
+    preferred_reminder: str
+    buzzer_acceptance: float
+    work_start_hour: int
+    work_end_hour: int
+    quiet_start_hour: int
+    quiet_end_hour: int
+    feedback_stats: Dict[str, Any]
+    updated_at: datetime
+
+
 class LatestOut(BaseModel):
     device_id: str
     telemetry: Optional[TelemetryOut] = None

@@ -4446,6 +4446,173 @@
       outline-offset: 3px;
     }
 
+    .report-subsection {
+      margin: 22px 0 0;
+      padding-top: 19px;
+      border-top: 1px solid rgba(21, 35, 30, .1);
+    }
+
+    .report-subsection h3 {
+      margin: 0 0 12px;
+      color: var(--ink);
+      font-family: var(--display);
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+
+    .evidence-list,
+    .knowledge-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .evidence-list li {
+      position: relative;
+      padding: 13px 14px 13px 34px;
+      color: var(--ink-soft);
+      background: #eef1eb;
+      border-radius: 14px;
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .evidence-list li::before {
+      content: "✓";
+      position: absolute;
+      top: 13px;
+      left: 13px;
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .evidence-citations {
+      display: inline-flex;
+      gap: 4px;
+      margin-left: 5px;
+      color: var(--blue);
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .knowledge-item {
+      padding: 14px 15px;
+      background: #fff4e1;
+      border-radius: 15px;
+    }
+
+    .knowledge-item a {
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .knowledge-item a:hover {
+      color: var(--blue);
+      text-decoration: underline;
+    }
+
+    .knowledge-source {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .knowledge-excerpt {
+      margin: 8px 0 0;
+      color: var(--ink-soft);
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    .ai-action-card {
+      padding: 17px;
+      background: var(--deep);
+      border-radius: 18px;
+    }
+
+    .ai-action-kicker {
+      color: var(--acid);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .05em;
+    }
+
+    .ai-action-title {
+      margin: 8px 0 5px;
+      color: #fff;
+      font-family: var(--display);
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .ai-action-reason {
+      margin: 0 0 15px;
+      color: rgba(255, 255, 255, .68);
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    .ai-action-confirm {
+      width: 100%;
+      min-height: 44px;
+      color: var(--deep);
+      background: var(--acid);
+      border: 0;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ai-action-status {
+      margin: 9px 0 0;
+      color: rgba(255, 255, 255, .62);
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    .feedback-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .feedback-button {
+      flex: 1 1 92px;
+      min-height: 38px;
+      padding: 8px 11px;
+      color: var(--ink-soft);
+      background: #eef1eb;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .feedback-button:hover {
+      border-color: rgba(39, 73, 232, .24);
+    }
+
+    .feedback-button.is-selected {
+      color: var(--blue);
+      background: var(--lavender);
+      border-color: rgba(39, 73, 232, .18);
+    }
+
+    .feedback-message {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
     @media (min-width: 760px) {
       .mast,
       body[data-tab]:not([data-tab="live"]) .mast {
@@ -4595,10 +4762,6 @@
 
       #view-settings .settings-group {
         margin: 0;
-      }
-
-      #view-settings .settings-group:last-of-type {
-        grid-column: 1 / -1;
       }
 
       .history-list {
@@ -4793,9 +4956,30 @@
           <span id="source-tag" class="source-tag">尚未生成</span>
         </div>
         <p id="report-summary" class="summary">连接后会先读取已保存的日报；需要新的综合判断时再生成深度分析。</p>
+        <section id="report-evidence-section" class="report-subsection" hidden>
+          <h3>判断依据</h3>
+          <ul id="report-evidence" class="evidence-list"></ul>
+        </section>
+        <section id="report-knowledge-section" class="report-subsection" hidden>
+          <h3>知识来源</h3>
+          <ul id="report-knowledge" class="knowledge-list"></ul>
+        </section>
+        <section id="report-action-section" class="report-subsection" hidden>
+          <h3>AI 提议</h3>
+          <div id="report-actions" class="ai-action-list"></div>
+        </section>
         <div id="insights" class="insight-list"></div>
         <ul id="recommendations" class="recommendations"></ul>
         <button id="analyze" class="analyze-button" type="button">生成今日研判</button>
+        <section id="report-feedback-section" class="report-subsection" hidden>
+          <h3>这次建议有帮助吗？</h3>
+          <div class="feedback-row" role="group" aria-label="AI 建议反馈">
+            <button class="feedback-button" type="button" data-feedback="handled">已处理</button>
+            <button class="feedback-button" type="button" data-feedback="later">稍后提醒</button>
+            <button class="feedback-button" type="button" data-feedback="not_helpful">没有帮助</button>
+          </div>
+          <p id="feedback-message" class="feedback-message" role="status" aria-live="polite"></p>
+        </section>
         <div id="message" class="message" role="status" aria-live="polite"></div>
       </section>
       </section>
@@ -4870,6 +5054,33 @@
             开启配网热点
           </button>
           <p id="network-message" class="settings-hint" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="settings-heading">AI 记忆</h3>
+          <p id="memory-summary" class="settings-hint">正在读取个性化偏好…</p>
+          <div class="field-grid" style="margin-top: 15px;">
+            <div class="field">
+              <label for="work-start">工作开始小时</label>
+              <input id="work-start" inputmode="numeric" type="number" min="0" max="23">
+            </div>
+            <div class="field">
+              <label for="work-end">工作结束小时</label>
+              <input id="work-end" inputmode="numeric" type="number" min="0" max="23">
+            </div>
+            <div class="field">
+              <label for="quiet-start">免打扰开始</label>
+              <input id="quiet-start" inputmode="numeric" type="number" min="0" max="23">
+            </div>
+            <div class="field">
+              <label for="quiet-end">免打扰结束</label>
+              <input id="quiet-end" inputmode="numeric" type="number" min="0" max="23">
+            </div>
+          </div>
+          <button id="save-memory" class="secondary-button" type="button" style="margin-top: 18px; width: 100%;">
+            保存 AI 偏好
+          </button>
+          <p id="memory-message" class="settings-hint" role="status" aria-live="polite"></p>
         </div>
       </section>
 
@@ -5090,10 +5301,31 @@
       $("report-interval").value = config.report_interval || 5;
     }
 
+    function fillMemory(memory) {
+      const preferenceLabel = {
+        buzzer: "更接受即时蜂鸣",
+        visual: "偏好低打扰的视觉提醒",
+        balanced: "平衡提醒"
+      }[memory.preferred_reminder] || "平衡提醒";
+      const stats = memory.feedback_stats || {};
+      $("memory-summary").textContent =
+        `${preferenceLabel} · 蜂鸣接受度 ${Math.round(memory.buzzer_acceptance * 100)}% · ` +
+        `已处理 ${stats.handled || 0} 次，没有帮助 ${stats.not_helpful || 0} 次`;
+      $("work-start").value = memory.work_start_hour;
+      $("work-end").value = memory.work_end_hour;
+      $("quiet-start").value = memory.quiet_start_hour;
+      $("quiet-end").value = memory.quiet_end_hour;
+    }
+
     async function loadSettings() {
       try {
         if (!token) await login();
-        fillSettings(await api(`/devices/${DEVICE_ID}/thresholds`));
+        const [config, memory] = await Promise.all([
+          api(`/devices/${DEVICE_ID}/thresholds`),
+          api(`/devices/${DEVICE_ID}/memory`)
+        ]);
+        fillSettings(config);
+        fillMemory(memory);
         $("network-copy").textContent = "ESP32 会记住上次成功连接的 2.4 GHz Wi-Fi。";
       } catch (error) {
         $("settings-message").textContent = "无法读取云端设置。";
@@ -5171,6 +5403,35 @@
       }
     }
 
+    async function saveMemory() {
+      const button = $("save-memory");
+      const message = $("memory-message");
+      const update = {
+        work_start_hour: Number($("work-start").value),
+        work_end_hour: Number($("work-end").value),
+        quiet_start_hour: Number($("quiet-start").value),
+        quiet_end_hour: Number($("quiet-end").value)
+      };
+      if (Object.values(update).some((value) =>
+        !Number.isInteger(value) || value < 0 || value > 23
+      )) {
+        message.textContent = "时间必须填写 0-23 的整点小时。";
+        return;
+      }
+      setButtonBusy(button, true, "保存中…");
+      try {
+        fillMemory(await api(`/devices/${DEVICE_ID}/memory`, {
+          method: "PUT",
+          body: JSON.stringify(update)
+        }));
+        message.textContent = "AI 已记住新的工作时间和免打扰时段。";
+      } catch (error) {
+        message.textContent = "AI 偏好保存失败。";
+      } finally {
+        setButtonBusy(button, false);
+      }
+    }
+
     async function commandAction(button, name, params, targetId, successText) {
       const target = $(targetId);
       setButtonBusy(button, true);
@@ -5228,10 +5489,153 @@
     function clearReportExtras() {
       $("insights").replaceChildren();
       $("recommendations").replaceChildren();
+      $("report-evidence").replaceChildren();
+      $("report-knowledge").replaceChildren();
+      $("report-actions").replaceChildren();
+      $("report-evidence-section").hidden = true;
+      $("report-knowledge-section").hidden = true;
+      $("report-action-section").hidden = true;
+      $("report-feedback-section").hidden = true;
+      $("feedback-message").textContent = "";
+      document.querySelectorAll(".feedback-button").forEach((button) => {
+        button.classList.remove("is-selected");
+        button.disabled = false;
+      });
+    }
+
+    function renderReportEvidence(items) {
+      if (!Array.isArray(items) || !items.length) return;
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item.fact || "";
+        const citations = Array.isArray(item.knowledge_ids) ? item.knowledge_ids : [];
+        if (citations.length) {
+          const ref = document.createElement("span");
+          ref.className = "evidence-citations";
+          ref.textContent = citations.map((id) => `[${id}]`).join(" ");
+          li.append(ref);
+        }
+        $("report-evidence").append(li);
+      });
+      $("report-evidence-section").hidden = false;
+    }
+
+    function renderReportKnowledge(items) {
+      if (!Array.isArray(items) || !items.length) return;
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = "knowledge-item";
+        const link = document.createElement("a");
+        link.textContent = `[${item.id}] ${item.title || "知识条目"}`;
+        if (item.url) {
+          link.href = item.url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+        }
+        const source = document.createElement("span");
+        source.className = "knowledge-source";
+        source.textContent = item.source || "";
+        const excerpt = document.createElement("p");
+        excerpt.className = "knowledge-excerpt";
+        excerpt.textContent = item.excerpt || "";
+        li.append(link, source, excerpt);
+        $("report-knowledge").append(li);
+      });
+      $("report-knowledge-section").hidden = false;
+    }
+
+    function renderReportActions(report, items) {
+      if (!Array.isArray(items) || !items.length) return;
+      items.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "ai-action-card";
+        const kicker = document.createElement("div");
+        kicker.className = "ai-action-kicker";
+        kicker.textContent = "需要你确认";
+        const title = document.createElement("div");
+        title.className = "ai-action-title";
+        title.textContent = item.label || "执行 AI 建议";
+        const reason = document.createElement("p");
+        reason.className = "ai-action-reason";
+        reason.textContent = item.reason || "";
+        const confirm = document.createElement("button");
+        confirm.type = "button";
+        confirm.className = "ai-action-confirm";
+        confirm.textContent = "确认执行";
+        const status = document.createElement("p");
+        status.className = "ai-action-status";
+        status.textContent = "系统只会在你确认后向设备下发命令。";
+        confirm.addEventListener("click", async () => {
+          if (!item.command_id || confirm.disabled) return;
+          confirm.disabled = true;
+          confirm.textContent = "正在等待设备确认…";
+          status.textContent = "命令已提交，正在等待 ESP32 ACK。";
+          try {
+            await api(`/commands/${item.command_id}/confirm`, { method: "POST" });
+            const result = await waitForCommand({ id: item.command_id });
+            if (result.status === "acked") {
+              confirm.textContent = "设备已执行";
+              status.textContent = "ESP32 已返回 ACK，动作执行完成。";
+              item.status = "acked";
+            } else {
+              confirm.textContent = "重新确认";
+              confirm.disabled = false;
+              status.textContent = `设备返回状态：${result.status}`;
+            }
+          } catch (error) {
+            confirm.textContent = "重新确认";
+            confirm.disabled = false;
+            status.textContent = "命令确认失败，请检查设备在线状态。";
+          }
+        });
+        card.append(kicker, title, reason, confirm, status);
+        $("report-actions").append(card);
+      });
+      $("report-action-section").hidden = false;
+    }
+
+    function renderReportFeedback(report, data) {
+      if (!report || !data.generated_at) return;
+      const commandId = (data.proposed_actions || [])
+        .map((item) => item.command_id)
+        .find((value) => Boolean(value));
+      document.querySelectorAll(".feedback-button").forEach((button) => {
+        button.onclick = async () => {
+          if (button.disabled) return;
+          document.querySelectorAll(".feedback-button").forEach((item) => {
+            item.disabled = true;
+          });
+          try {
+            await api(`/devices/${DEVICE_ID}/feedback`, {
+              method: "POST",
+              body: JSON.stringify({
+                report_id: report.id,
+                command_id: commandId || null,
+                feedback_type: button.dataset.feedback,
+                context: {
+                  source: data.source,
+                  risk_level: data.risk_level,
+                  generated_at: data.generated_at
+                }
+              })
+            });
+            button.classList.add("is-selected");
+            $("feedback-message").textContent =
+              "反馈已记录。下一次研判会参考你的提醒偏好。";
+          } catch (error) {
+            document.querySelectorAll(".feedback-button").forEach((item) => {
+              item.disabled = false;
+            });
+            $("feedback-message").textContent = "反馈保存失败，请稍后重试。";
+          }
+        };
+      });
+      $("report-feedback-section").hidden = false;
     }
 
     function renderReport(report) {
       if (!report) {
+        clearReportExtras();
         $("source-tag").textContent = "尚未生成";
         $("report-meta").textContent = "等待云端日报";
         return;
@@ -5239,8 +5643,8 @@
       const data = report.data || {};
       const isLlm = data.source === "llm";
       $("source-tag").textContent = isLlm
-        ? `云端模型 ${data.model || ""}`
-        : "规则+风险模型";
+        ? `${data.engine === "local" ? "本地模型" : "云端模型"} ${data.model || ""}`
+        : (data.knowledge_sources || []).length ? "RAG + 风险规则" : "规则+风险模型";
       $("report-meta").textContent = data.generated_at
         ? `生成于 ${timeText(data.generated_at)}`
         : "今日累计研判";
@@ -5262,6 +5666,10 @@
         li.textContent = item;
         $("recommendations").append(li);
       });
+      renderReportEvidence(data.evidence);
+      renderReportKnowledge(data.knowledge_sources);
+      renderReportActions(report, data.proposed_actions);
+      renderReportFeedback(report, data);
     }
 
     async function refresh() {
@@ -5320,6 +5728,7 @@
 
     $("analyze").addEventListener("click", analyze);
     $("save-thresholds").addEventListener("click", saveThresholds);
+    $("save-memory").addEventListener("click", saveMemory);
     $("reload-settings").addEventListener("click", loadSettings);
     $("test-buzzer").addEventListener("click", () => {
       commandAction(

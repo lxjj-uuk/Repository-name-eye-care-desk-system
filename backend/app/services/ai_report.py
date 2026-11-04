@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
+from uuid import uuid4
 
 import httpx
 from sqlalchemy.orm import Session
@@ -9,6 +10,10 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..config import settings
 from .aggregation import generate_daily_report
+from .ai_context import build_ai_context
+from .ai_memory import get_or_create_memory
+from .ai_tools import TOOL_DEFINITIONS, normalize_actions
+from .knowledge import retrieve_knowledge
 from .local_llm import (
     generate_json as generate_local_json,
     get_model_name as get_local_model_name,
@@ -313,53 +318,78 @@ def _build_prompt(
     data: Dict[str, Any],
     config: Optional[models.DeviceConfig],
     signals: List[Dict[str, str]],
+    context: Dict[str, Any],
+    knowledge: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
+    raw_curve = list(context.get("recent_light_curve") or [])[-8:]
+    last_command = context.get("last_command") or {}
+    prompt_context = {
+        "current": context.get("current"),
+        "recent_light_curve": [
+            [
+                str(item.get("ts") or "")[11:16],
+                item.get("lux"),
+                item.get("occupied"),
+            ]
+            for item in raw_curve
+        ],
+        "time_context": context.get("time_context"),
+        "last_command": {
+            key: last_command.get(key)
+            for key in ("name", "status", "result", "acked_at")
+        }
+        if last_command
+        else None,
+        "user_memory": context.get("user_memory"),
+        "data_quality": {
+            key: (context.get("data_quality") or {}).get(key)
+            for key in ("sample_count", "coverage", "device_online")
+        },
+    }
+    compact_tools = [
+        {
+            "name": item["name"],
+            "kind": item["kind"],
+            **({"params": item["params"]} if "params" in item else {}),
+        }
+        for item in TOOL_DEFINITIONS
+    ]
     return {
         "task": "根据工位用眼健康数据生成可执行的中文深度分析",
         "requirements": {
             "output": "JSON",
-            "fields": ["summary", "insights", "recommendations"],
-            "insights_item": {
-                "title": "string",
-                "detail": "string",
-                "level": "good|warn|high",
-            },
-            "summary": (
-                "80-120 字，引用至少两个真实统计值并说明关系；"
-                "不要写风险等级，页面已单独展示"
-            ),
-            "insights": "恰好 2 条，每条用 40-80 字解释数据如何导致结论",
-            "recommendations": "恰好 2 条，每条 15-40 字，必须是今天能执行的动作",
-            "recommendation_format": (
-                "recommendations 每一项必须是纯字符串，不得包含 "
-                "title、description 等字段名"
-            ),
-            "style": "自行组织新表述，优先解释在座低照光、久坐和湿度问题",
-            "recommendations_detail": (
-                "写成个人今天在工位上能直接执行的动作，不要给管理员工、"
-                "优化组织等宏观建议"
-            ),
+            "summary": "80-120字，引用两个真实数值，不写风险等级",
+            "insights": "恰好2条，每条含 title/detail/level",
+            "recommendations": "恰好2条纯字符串，是今天可直接执行的动作",
             "avoid": (
-                "不要做医疗诊断；不要虚构数据；不要把 occupied_ratio "
-                "解释成拥挤率或越高越好；不要输出 Markdown"
+                "不做医疗诊断，不虚构数据，不输出 Markdown；"
+                "occupied_ratio 是在座样本占比，不是拥挤率"
             ),
+            "proposed_actions": (
+                "最多1个动作，无必要时为空；只能使用 tools，不能声称已执行"
+            ),
+            "action_item": {
+                "tool": "buzz|set_thresholds",
+                "reason": "为什么现在需要这个动作",
+                "params": "符合 tools 参数约束的对象",
+            },
         },
         "stats": data,
         "signals": signals,
+        "live_context": prompt_context,
+        "knowledge": knowledge,
+        "tools": compact_tools,
         "signal_rule": (
             "只分析 signals 中的项目。signals 为 stable 时，所有指标均健康，"
             "不要编造任何不足、低湿度、久坐过长或其他风险。"
         ),
         "field_notes": {
-            "sample_count": "传感器采样点数量，不是人数或工位数量",
-            "occupied_ratio": (
-                "有人在座样本占比；低值只表示在座样本少，"
-                "不是拥挤或工位占用风险"
-            ),
+            "sample_count": "采样点数量，不是人数",
+            "occupied_ratio": "在座样本占比，不是拥挤率",
             "poor_light_occupied_ratio": "在座时低照度样本占比，是光照风险的主要依据",
             "max_sit_cont_min": "最长连续久坐分钟数",
-            "high_risk_ratio": "达到高风险阈值的样本占比",
-            "coverage": "有效数据覆盖比例，低于 0.8 说明数据可信度有限",
+            "coverage": "有效数据覆盖比例，低于0.8可信度有限",
+            "knowledge": "RAG知识，id可用于判断依据",
         },
         "thresholds": {
             "lux_min": config.lux_min if config else 150,
@@ -468,6 +498,8 @@ def _maybe_llm(
     data: Dict[str, Any],
     risk_level: str,
     config: Optional[models.DeviceConfig],
+    context: Dict[str, Any],
+    knowledge: List[Dict[str, Any]],
 ) -> Optional[Tuple[Dict[str, Any], str, str]]:
     if not settings.llm_api_url and not local_llm_available():
         return None
@@ -475,13 +507,15 @@ def _maybe_llm(
     signals = _build_signals(data, config)
     if len(signals) == 1 and signals[0]["key"] == "stable":
         return None
-    prompt = _build_prompt(data, config, signals)
+    prompt = _build_prompt(data, config, signals, context, knowledge)
     messages = [
         {
             "role": "system",
             "content": (
                 "你是工位用眼健康分析助手。根据真实统计数据给出"
-                "具体、有因果关系的分析和行动建议，只输出合法 JSON。"
+                "具体、有因果关系的分析和行动建议。读取 live_context、"
+                "knowledge 和 user_memory；控制动作必须留给用户确认。"
+                "只输出合法 JSON。"
             ),
         },
         {
@@ -528,6 +562,88 @@ def _maybe_llm(
     return None
 
 
+def _build_evidence(
+    signals: List[Dict[str, str]],
+    knowledge: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    source_ids = [item["id"] for item in knowledge[:2]]
+    return [
+        {
+            "fact": signal["fact"],
+            "level": signal["level"],
+            "knowledge_ids": source_ids,
+        }
+        for signal in signals[:4]
+    ]
+
+
+def _fallback_actions(
+    level: str,
+    signals: List[Dict[str, str]],
+    context: Dict[str, Any],
+    config: Optional[models.DeviceConfig],
+) -> List[Dict[str, Any]]:
+    current = context.get("current") or {}
+    time_context = context.get("time_context") or {}
+    memory = context.get("user_memory") or {}
+    if (
+        level == "low"
+        or not current.get("occupied")
+        or (context.get("data_quality") or {}).get("device_online") is False
+        or not config
+        or not config.buzzer_enabled
+        or time_context.get("is_quiet_time")
+        or memory.get("preferred_reminder") == "visual"
+    ):
+        return []
+    if not any(signal["level"] in {"warn", "high"} for signal in signals):
+        return []
+    return [
+        {
+            "tool": "buzz",
+            "reason": "当前有人且存在需要即时关注的环境信号",
+            "params": {"pattern": "short", "duration_ms": 250},
+        }
+    ]
+
+
+def _persist_ai_actions(
+    db: Session,
+    device_id: str,
+    actions: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    (
+        db.query(models.Command)
+        .filter(
+            models.Command.device_id == device_id,
+            models.Command.requested_by == "ai",
+            models.Command.status == "pending",
+        )
+        .update({"status": "cancelled"}, synchronize_session=False)
+    )
+    persisted: List[Dict[str, Any]] = []
+    for action in actions:
+        command = models.Command(
+            device_id=device_id,
+            command_name=action["command_name"],
+            params=action["params"],
+            status="pending",
+            request_id=uuid4().hex,
+            requested_by="ai",
+        )
+        db.add(command)
+        db.flush()
+        persisted.append(
+            {
+                **action,
+                "command_id": command.id,
+                "status": command.status,
+                "confirmation_required": True,
+            }
+        )
+    return persisted
+
+
 def generate_ai_report(
     db: Session, device_id: str, report_date: date
 ) -> Optional[models.Report]:
@@ -537,22 +653,29 @@ def generate_ai_report(
 
     config = db.get(models.DeviceConfig, device_id)
     data = dict(report.data or {})
+    memory = get_or_create_memory(db, device_id)
+    context = build_ai_context(db, device_id, report_date, config, data)
+    signals = _build_signals(data, config)
+    knowledge = retrieve_knowledge(signals, context, limit=3)
+    evidence = _build_evidence(signals, knowledge)
     score = _risk_score(data, config)
     level = _risk_level(score)
     insights = _build_insights(data, config, level)
     recommendations = _build_recommendations(data, config)
+    level_label = {"high": "偏高", "medium": "中等", "low": "平稳"}[level]
     summary = (
         f"{report_date.isoformat()} 共记录 {data.get('sample_count', 0)} 条数据；"
         f"平均照度 {data.get('avg_lux', '--')} lux，"
         f"最长连续久坐 {data.get('max_sit_cont_min', 0)} 分钟；"
-        f"综合风险 {level}。"
+        f"综合风险{level_label}。"
         f"建议：{'；'.join(recommendations[:3])}。"
     )
     source = "rule+risk-model"
 
-    llm_result = _maybe_llm(data, level, config)
+    llm_result = _maybe_llm(data, level, config, context, knowledge)
     model_name: Optional[str] = None
     engine: Optional[str] = None
+    raw_actions: Any = []
     if llm_result:
         llm, model_name, engine = llm_result
         if isinstance(llm.get("summary"), str):
@@ -561,7 +684,17 @@ def generate_ai_report(
             insights = llm["insights"]
         if isinstance(llm.get("recommendations"), list):
             recommendations = [str(item) for item in llm["recommendations"]]
+        raw_actions = llm.get("proposed_actions", [])
         source = "llm"
+
+    actions = normalize_actions(raw_actions, config, context, limit=1)
+    if not actions:
+        actions = normalize_actions(
+            _fallback_actions(level, signals, context, config),
+            config,
+            context,
+            limit=1,
+        )
 
     data.update(
         {
@@ -573,11 +706,39 @@ def generate_ai_report(
             "model": model_name,
             "engine": engine,
             "generated_at": models.utcnow().isoformat() + "Z",
+            "signals": signals,
+            "evidence": evidence,
+            "knowledge_sources": knowledge,
+            "ai_context": context,
+            "user_memory": context.get("user_memory", {}),
+            "tool_trace": [
+                {
+                    "tool": "get_light_curve",
+                    "kind": "read",
+                    "points": len(context.get("recent_light_curve") or []),
+                },
+                {
+                    "tool": "get_sitting_summary",
+                    "kind": "read",
+                    "max_contiguous_min": (
+                        context.get("sitting_summary") or {}
+                    ).get("max_contiguous_min", 0),
+                },
+            ],
         }
     )
-    report.data = data
     report.summary = summary
     report.risk_level = level
+    data["proposed_actions"] = _persist_ai_actions(db, device_id, actions)
+    data["tool_trace"].extend(
+        {
+            "tool": action["tool"],
+            "kind": "confirm",
+            "command_id": action["command_id"],
+        }
+        for action in data["proposed_actions"]
+    )
+    report.data = dict(data)
     db.commit()
     db.refresh(report)
     return report

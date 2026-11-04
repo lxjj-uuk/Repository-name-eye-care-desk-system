@@ -42,6 +42,10 @@ if [[ -z "${SOURCE_DIR}" ]]; then
     echo "Source archive did not contain the expected main directory." >&2
     exit 1
 fi
+ENV_SNAPSHOT="${SOURCE_TMP}/existing.env"
+if [[ -f "${APP_DIR}/backend/.env" ]]; then
+    cp "${APP_DIR}/backend/.env" "${ENV_SNAPSHOT}"
+fi
 rm -rf "${APP_DIR}"
 mv "${SOURCE_DIR}" "${APP_DIR}"
 
@@ -62,6 +66,9 @@ python3 -m venv "${APP_DIR}/backend/.venv"
     -r "${APP_DIR}/backend/requirements-cloud.txt"
 
 ENV_FILE="${APP_DIR}/backend/.env"
+if [[ -f "${ENV_SNAPSHOT}" ]]; then
+    install -m 0600 "${ENV_SNAPSHOT}" "${ENV_FILE}"
+fi
 if [[ ! -f "${ENV_FILE}" ]]; then
     cat > "${ENV_FILE}" <<EOF
 DATABASE_URL=sqlite:////var/lib/eye-care/eye_care.db

@@ -151,3 +151,39 @@ class Report(Base):
     data = Column(JSON, nullable=False, default=dict)
     created_at = Column(DateTime, nullable=False, default=utcnow)
     updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)
+
+
+class AIFeedback(Base):
+    __tablename__ = "ai_feedback"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    device_id = Column(
+        String(64),
+        ForeignKey("devices.device_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    report_id = Column(Integer, ForeignKey("reports.id", ondelete="SET NULL"))
+    command_id = Column(Integer, ForeignKey("commands.id", ondelete="SET NULL"))
+    feedback_type = Column(String(32), nullable=False)
+    note = Column(Text)
+    context = Column(JSON, nullable=False, default=dict)
+    created_at = Column(DateTime, nullable=False, default=utcnow, index=True)
+
+
+class UserMemory(Base):
+    __tablename__ = "user_memory"
+
+    device_id = Column(
+        String(64),
+        ForeignKey("devices.device_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    preferred_reminder = Column(String(32), nullable=False, default="balanced")
+    buzzer_acceptance = Column(Float, nullable=False, default=0.5)
+    work_start_hour = Column(Integer, nullable=False, default=9)
+    work_end_hour = Column(Integer, nullable=False, default=18)
+    quiet_start_hour = Column(Integer, nullable=False, default=22)
+    quiet_end_hour = Column(Integer, nullable=False, default=8)
+    feedback_stats = Column(JSON, nullable=False, default=dict)
+    updated_at = Column(DateTime, nullable=False, default=utcnow, onupdate=utcnow)

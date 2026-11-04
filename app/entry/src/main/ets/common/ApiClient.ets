@@ -16,6 +16,17 @@ interface LoginBody {
   password: string;
 }
 
+interface FeedbackContext {
+  source: string;
+}
+
+interface FeedbackBody {
+  report_id: number;
+  command_id?: number;
+  feedback_type: string;
+  context: FeedbackContext;
+}
+
 export class ApiClient {
   private static token: string = '';
 
@@ -227,5 +238,29 @@ export class ApiClient {
       `/devices/${AppConfig.deviceId}/reports/ai?date=${date}`
     );
     return JSON.parse(text) as DailyReport;
+  }
+
+  static async sendFeedback(
+    reportId: number,
+    commandId: number,
+    feedbackType: string
+  ): Promise<void> {
+    if (AppConfig.useMockData) {
+      return;
+    }
+    await ApiClient.ensureLogin();
+    const body: FeedbackBody = {
+      report_id: reportId,
+      command_id: commandId > 0 ? commandId : undefined,
+      feedback_type: feedbackType,
+      context: {
+        source: 'harmony-app'
+      }
+    };
+    await ApiClient.request(
+      http.RequestMethod.POST,
+      `/devices/${AppConfig.deviceId}/feedback`,
+      body
+    );
   }
 }

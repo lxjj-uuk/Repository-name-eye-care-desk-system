@@ -10,6 +10,9 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 
+BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+
+
 def result_payload(result) -> dict:
     structured = getattr(result, "structured_content", None)
     if structured is None:
@@ -45,8 +48,8 @@ async def main():
         cwd=str(project_dir),
         env={
             **os.environ,
-            "BACKEND_BASE_URL": "http://127.0.0.1:8000",
-            "API_TOKEN": "dev-token-change-me",
+            "BACKEND_BASE_URL": BACKEND_BASE_URL,
+            "API_TOKEN": os.getenv("API_TOKEN", "dev-token-change-me"),
             "PYTHONIOENCODING": "utf-8",
         },
     )
@@ -89,6 +92,14 @@ async def main():
             print("buzz.status:", buzz_data.get("status"))
             print("buzz.command_id:", buzz_data.get("command_id"))
 
+            threshold = await session.call_tool(
+                "set_thresholds",
+                {"device_id": "hi3861_001", "lux_min": 145},
+            )
+            threshold_data = result_payload(threshold)
+            print("thresholds.status:", threshold_data.get("status"))
+            print("thresholds.command_id:", threshold_data.get("command_id"))
+
             pending = await session.call_tool(
                 "get_pending_commands",
                 {"device_id": "hi3861_001", "limit": 20},
@@ -99,14 +110,14 @@ async def main():
     command_id = buzz_data.get("command_id")
     if command_id:
         login = httpx.post(
-            "http://127.0.0.1:8000/auth/login",
+            f"{BACKEND_BASE_URL}/auth/login",
             json={"username": "demo", "password": "demo123"},
             timeout=10.0,
         )
         login.raise_for_status()
         token = login.json()["access_token"]
         confirmed = httpx.post(
-            f"http://127.0.0.1:8000/commands/{command_id}/confirm",
+            f"{BACKEND_BASE_URL}/commands/{command_id}/confirm",
             headers={"Authorization": f"Bearer {token}"},
             timeout=10.0,
         )

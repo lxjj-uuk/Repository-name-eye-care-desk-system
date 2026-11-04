@@ -174,6 +174,11 @@ def confirm_command(command_id: int, db: Session = Depends(get_db)):
             seconds = int((command.params or {}).get("seconds", 0))
             if seconds > 0:
                 get_config(db, command.device_id).report_interval = seconds
+        elif command.command_name == "set_threshold":
+            config = get_config(db, command.device_id)
+            for key, value in (command.params or {}).items():
+                if hasattr(config, key):
+                    setattr(config, key, value)
     except Exception as exc:  # noqa: BLE001
         command.status = "failed"
         command.result = {"error": str(exc)}
