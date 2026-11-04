@@ -16,11 +16,13 @@ os.environ["DEMO_PASSWORD"] = "demo123"
 os.environ["IOTDA_MOCK"] = "true"
 os.environ["LLM_API_URL"] = ""
 os.environ["LOCAL_LLM_MODEL_PATH"] = "Z:/missing-eye-care-model.gguf"
+os.environ["AI_GUARDIAN_ENABLED"] = "false"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
-from app.models import DeviceConfig  # noqa: E402
+from app.models import DeviceConfig, Telemetry, UserMemory, utcnow  # noqa: E402
+from app.services.ai_guardian import should_trigger_guardian  # noqa: E402
 from app.services.ai_report import _fallback_actions  # noqa: E402
 
 
@@ -238,8 +240,35 @@ def test_low_risk_warning_can_propose_action():
     assert actions[0]["tool"] == "buzz"
 
 
+def test_guardian_trigger():
+    row = Telemetry(
+        device_id="hi3861_001",
+        ts=utcnow(),
+        lux=80,
+        risk_level="medium",
+        occupied=True,
+        sit_cont_min=50,
+    )
+    config = DeviceConfig(
+        device_id="hi3861_001",
+        lux_min=150,
+        lux_max=1000,
+        sit_warn_min=45,
+        sit_strong_min=60,
+    )
+    memory = UserMemory(
+        device_id="hi3861_001",
+        quiet_start_hour=22,
+        quiet_end_hour=8,
+    )
+    assert should_trigger_guardian(row, config, memory)
+    row.occupied = False
+    assert not should_trigger_guardian(row, config, memory)
+
+
 if __name__ == "__main__":
     test_health()
     test_low_risk_warning_can_propose_action()
+    test_guardian_trigger()
     test_full_flow()
     print("smoke tests passed")

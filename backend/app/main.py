@@ -11,6 +11,7 @@ from .config import settings
 from .db import Base, SessionLocal, engine
 from .routers import auth, commands, devices, feedback, ingest, reports
 from .services.ai_tools import TOOL_DEFINITIONS
+from .services.ai_guardian import run_guardian
 from .services.knowledge import load_knowledge
 from .services.local_llm import get_model_name, is_available as local_llm_available
 
@@ -25,6 +26,8 @@ async def lifespan(app: FastAPI):
             db.commit()
     mqtt_stop = threading.Event()
     mqtt_thread = None
+    guardian_stop = threading.Event()
+    guardian_thread = None
     if (
         settings.iotda_app_mqtt_enabled
         and settings.iotda_app_mqtt_configured
@@ -38,18 +41,29 @@ async def lifespan(app: FastAPI):
             daemon=True,
         )
         mqtt_thread.start()
+    if settings.ai_guardian_enabled:
+        guardian_thread = threading.Thread(
+            target=run_guardian,
+            args=(guardian_stop,),
+            name="ai-guardian",
+            daemon=True,
+        )
+        guardian_thread.start()
     try:
         yield
     finally:
         if mqtt_thread is not None:
             mqtt_stop.set()
             mqtt_thread.join(timeout=3)
+        if guardian_thread is not None:
+            guardian_stop.set()
+            guardian_thread.join(timeout=3)
 
 
 app = FastAPI(
     title="Eye Care Desk API",
     description="工位用眼健康与桌面微环境监护系统后端",
-    version="0.2.0",
+    version="0.2.1",
     lifespan=lifespan,
 )
 
@@ -87,7 +101,7 @@ def health():
     return {
         "status": "ok",
         "service": "eye-care-api",
-        "version": "0.2.0",
+        "version": "0.2.1",
         "ai": {
             "local_available": local_llm_available(),
             "local_model": get_model_name() if local_llm_available() else None,
@@ -95,5 +109,10 @@ def health():
             "rag_documents": len(load_knowledge()),
             "tools": [item["name"] for item in TOOL_DEFINITIONS],
             "feedback_memory": True,
+            "guardian": {
+                "enabled": settings.ai_guardian_enabled,
+                "interval_seconds": settings.ai_guardian_interval_s,
+                "cooldown_seconds": settings.ai_guardian_cooldown_s,
+            },
         },
     }

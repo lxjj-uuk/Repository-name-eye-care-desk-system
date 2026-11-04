@@ -73,6 +73,13 @@ class Settings:
     local_llm_context: int = int(os.getenv("LOCAL_LLM_CONTEXT", "3072"))
     local_llm_threads: int = int(os.getenv("LOCAL_LLM_THREADS", "0"))
     local_llm_gpu_layers: int = int(os.getenv("LOCAL_LLM_GPU_LAYERS", "0"))
+    ai_guardian_enabled: bool = _bool(os.getenv("AI_GUARDIAN_ENABLED"), True)
+    ai_guardian_interval_s: float = float(
+        os.getenv("AI_GUARDIAN_INTERVAL_S", "30")
+    )
+    ai_guardian_cooldown_s: int = int(
+        os.getenv("AI_GUARDIAN_COOLDOWN_S", "300")
+    )
 
     @property
     def iotda_configured(self) -> bool:
