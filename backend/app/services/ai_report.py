@@ -340,6 +340,10 @@ def _build_prompt(
         }
         if last_command
         else None,
+        "last_action_outcome": context.get("last_action_outcome"),
+        "recent_action_outcomes": list(
+            context.get("recent_action_outcomes") or []
+        )[:3],
         "user_memory": context.get("user_memory"),
         "data_quality": {
             key: (context.get("data_quality") or {}).get(key)
@@ -737,6 +741,52 @@ def generate_ai_report(
         }
         for action in data["proposed_actions"]
     )
+    current_context = context.get("current") or {}
+    first_action = data["proposed_actions"][0] if data["proposed_actions"] else None
+    trace = [
+        {
+            "stage": "感知",
+            "status": "completed",
+            "detail": (
+                f"照度 {current_context.get('lux', '--')} lux，"
+                f"连续久坐 {current_context.get('sit_cont_min', 0)} 分钟，"
+                f"{'有人' if current_context.get('occupied') else '无人'}"
+            ),
+        },
+        {
+            "stage": "检索",
+            "status": "completed",
+            "detail": "、".join(item["title"] for item in knowledge),
+        },
+        {
+            "stage": "判断",
+            "status": "completed",
+            "detail": (insights[0]["title"] if insights else "已完成环境判断"),
+        },
+    ]
+    if first_action:
+        trace.extend(
+            [
+                {
+                    "stage": "提议",
+                    "status": "waiting",
+                    "detail": first_action["label"],
+                    "command_id": first_action["command_id"],
+                },
+                {
+                    "stage": "确认",
+                    "status": "waiting",
+                    "detail": "等待用户确认后下发设备",
+                },
+                {
+                    "stage": "验证",
+                    "status": "waiting",
+                    "detail": f"ACK 后约 {settings.outcome_verify_delay_s} 秒复测效果",
+                },
+            ]
+        )
+    data["agent_trace"] = trace
+    data["recent_action_outcomes"] = context.get("recent_action_outcomes", [])
     report.data = dict(data)
     db.commit()
     db.refresh(report)

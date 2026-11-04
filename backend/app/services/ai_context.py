@@ -94,6 +94,22 @@ def build_ai_context(
         .order_by(models.Command.created_at.desc())
         .first()
     )
+    last_outcome = (
+        db.query(models.ActionOutcome)
+        .filter(models.ActionOutcome.device_id == device_id)
+        .order_by(models.ActionOutcome.created_at.desc())
+        .first()
+    )
+    recent_outcomes = (
+        db.query(models.ActionOutcome)
+        .filter(
+            models.ActionOutcome.device_id == device_id,
+            models.ActionOutcome.status == "verified",
+        )
+        .order_by(models.ActionOutcome.verified_at.desc())
+        .limit(5)
+        .all()
+    )
     memory = db.get(models.UserMemory, device_id)
     local_now = cutoff.replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ)
     hour = local_now.hour
@@ -136,6 +152,19 @@ def build_ai_context(
         if last_command
         else None
     )
+    outcome_context = (
+        {
+            "command_id": last_outcome.command_id,
+            "action": last_outcome.action_name,
+            "status": last_outcome.status,
+            "outcome": last_outcome.outcome,
+            "summary": last_outcome.summary,
+            "next_action": last_outcome.next_action,
+            "verified_at": _local_iso(last_outcome.verified_at),
+        }
+        if last_outcome
+        else None
+    )
 
     return {
         "current": current,
@@ -162,6 +191,18 @@ def build_ai_context(
             "is_quiet_time": _inside_window(hour, quiet_start, quiet_end),
         },
         "last_command": command_context,
+        "last_action_outcome": outcome_context,
+        "recent_action_outcomes": [
+            {
+                "command_id": item.command_id,
+                "action": item.action_name,
+                "outcome": item.outcome,
+                "summary": item.summary,
+                "next_action": item.next_action,
+                "verified_at": _local_iso(item.verified_at),
+            }
+            for item in recent_outcomes
+        ],
         "user_memory": (
             memory_context(memory)
             if memory

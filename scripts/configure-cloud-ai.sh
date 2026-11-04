@@ -36,6 +36,7 @@ updates = {
     "AI_GUARDIAN_ENABLED": "true",
     "AI_GUARDIAN_INTERVAL_S": "30",
     "AI_GUARDIAN_COOLDOWN_S": "300",
+    "OUTCOME_VERIFY_DELAY_S": "60",
 }
 
 lines = env_path.read_text(encoding="utf-8").splitlines()

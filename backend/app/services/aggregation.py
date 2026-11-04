@@ -154,6 +154,8 @@ def generate_daily_report(
         "ai_context",
         "user_memory",
         "tool_trace",
+        "agent_trace",
+        "recent_action_outcomes",
         "proposed_actions",
         "risk",
         "risk_level",

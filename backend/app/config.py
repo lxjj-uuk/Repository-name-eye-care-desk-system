@@ -80,6 +80,9 @@ class Settings:
     ai_guardian_cooldown_s: int = int(
         os.getenv("AI_GUARDIAN_COOLDOWN_S", "300")
     )
+    outcome_verify_delay_s: int = int(
+        os.getenv("OUTCOME_VERIFY_DELAY_S", "60")
+    )
 
     @property
     def iotda_configured(self) -> bool:

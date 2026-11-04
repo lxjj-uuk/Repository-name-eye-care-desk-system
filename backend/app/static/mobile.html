@@ -4654,6 +4654,62 @@
       line-height: 1.6;
     }
 
+    .agent-trace-list {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: trace;
+    }
+
+    .agent-trace-item {
+      position: relative;
+      min-height: 48px;
+      padding: 9px 0 12px 29px;
+      color: var(--ink-soft);
+      border-left: 1px solid rgba(39, 73, 232, .18);
+      counter-increment: trace;
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .agent-trace-item::before {
+      content: counter(trace);
+      position: absolute;
+      left: -10px;
+      top: 7px;
+      display: grid;
+      place-items: center;
+      width: 19px;
+      height: 19px;
+      color: var(--ink-soft);
+      background: #eef1eb;
+      border: 1px solid rgba(39, 73, 232, .2);
+      border-radius: 50%;
+      font-family: "DIN Alternate", sans-serif;
+      font-size: 8px;
+    }
+
+    .agent-trace-item.is-completed::before {
+      color: #fff;
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .agent-trace-item.is-waiting::before {
+      color: var(--deep);
+      background: var(--acid);
+      border-color: var(--deep);
+    }
+
+    .agent-trace-item strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--ink);
+      font-size: 11px;
+    }
+
     .ai-action-card {
       padding: 17px;
       background: var(--deep);
@@ -5094,6 +5150,10 @@
         <section id="report-knowledge-section" class="report-subsection" hidden>
           <h3>知识来源</h3>
           <ul id="report-knowledge" class="knowledge-list"></ul>
+        </section>
+        <section id="report-trace-section" class="report-subsection" hidden>
+          <h3>决策轨迹</h3>
+          <ol id="report-trace" class="agent-trace-list"></ol>
         </section>
         <section id="report-action-section" class="report-subsection" hidden>
           <h3>AI 提议</h3>
@@ -5656,9 +5716,11 @@
       $("recommendations").replaceChildren();
       $("report-evidence").replaceChildren();
       $("report-knowledge").replaceChildren();
+      $("report-trace").replaceChildren();
       $("report-actions").replaceChildren();
       $("report-evidence-section").hidden = true;
       $("report-knowledge-section").hidden = true;
+      $("report-trace-section").hidden = true;
       $("report-action-section").hidden = true;
       $("report-feedback-section").hidden = true;
       $("feedback-message").textContent = "";
@@ -5709,9 +5771,64 @@
       $("report-knowledge-section").hidden = false;
     }
 
+    function renderReportTrace(items) {
+      if (!Array.isArray(items) || !items.length) return;
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        li.className = `agent-trace-item is-${item.status || "waiting"}`;
+        li.dataset.stage = item.stage || "";
+        const title = document.createElement("strong");
+        title.textContent = item.stage || "步骤";
+        li.append(title, document.createTextNode(item.detail || ""));
+        $("report-trace").append(li);
+      });
+      $("report-trace-section").hidden = false;
+    }
+
+    function updateReportTrace(stage, status, detail) {
+      const node = document.querySelector(
+        `.agent-trace-item[data-stage="${stage}"]`
+      );
+      if (!node) return;
+      node.classList.remove("is-waiting", "is-completed");
+      node.classList.add(`is-${status}`);
+      const textNode = [...node.childNodes].find((item) => item.nodeType === Node.TEXT_NODE);
+      if (textNode && detail) textNode.textContent = detail;
+    }
+
+    async function waitForOutcome(commandId, statusNode) {
+      for (let attempt = 0; attempt < 90; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        try {
+          const outcome = await api(`/commands/${commandId}/outcome`);
+          if (outcome.status !== "verified") {
+            statusNode.textContent = "命令已确认，正在等待执行后的效果验证。";
+            continue;
+          }
+          const label = {
+            improved: "效果已改善",
+            unchanged: "暂未明显改善",
+            worse: "指标反而变差",
+            inconclusive: "暂时无法判断"
+          }[outcome.outcome] || "效果已完成验证";
+          statusNode.textContent = `${label}：${outcome.summary || ""}` +
+            (outcome.next_action ? ` ${outcome.next_action}` : "");
+          updateReportTrace(
+            "验证",
+            "completed",
+            `${label}：${outcome.summary || "已完成效果验证。"}`
+          );
+          return;
+        } catch (error) {
+          statusNode.textContent = "命令已确认，正在等待执行后的效果验证。";
+        }
+      }
+    }
+
     function renderReportActions(report, items) {
       if (!Array.isArray(items) || !items.length) return;
       items.forEach((item) => {
+        updateReportTrace("提议", "completed", item.label || item.reason || "已生成动作提议。");
         const card = document.createElement("div");
         card.className = "ai-action-card";
         const kicker = document.createElement("div");
@@ -5740,8 +5857,11 @@
             const result = await waitForCommand({ id: item.command_id });
             if (result.status === "acked") {
               confirm.textContent = "命令已确认";
-              status.textContent = "ESP32 已返回 ACK，蜂鸣命令已转发到 Hi3861。";
+              status.textContent = "ESP32 已返回 ACK，正在等待效果验证。";
               item.status = "acked";
+              updateReportTrace("确认", "completed", "用户已经确认，设备已返回 ACK。");
+              updateReportTrace("验证", "waiting", "正在比较执行前后的环境数据。");
+              waitForOutcome(item.command_id, status);
             } else {
               confirm.textContent = "重新确认";
               confirm.disabled = false;
@@ -5760,11 +5880,15 @@
             if (command.status === "acked") {
               confirm.disabled = true;
               confirm.textContent = "命令已确认";
-              status.textContent = "ESP32 已返回 ACK，蜂鸣命令已转发到 Hi3861。";
+              status.textContent = "ESP32 已返回 ACK，正在等待效果验证。";
+              updateReportTrace("确认", "completed", "用户已经确认，设备已返回 ACK。");
+              updateReportTrace("验证", "waiting", "正在比较执行前后的环境数据。");
+              waitForOutcome(item.command_id, status);
             } else if (command.status === "sent") {
               confirm.disabled = true;
               confirm.textContent = "等待设备确认";
               status.textContent = "命令已下发，正在等待 ESP32 ACK。";
+              updateReportTrace("确认", "waiting", "命令已下发，等待设备 ACK。");
             } else if (["failed", "cancelled"].includes(command.status)) {
               confirm.disabled = true;
               confirm.textContent = command.status === "failed" ? "执行失败" : "已取消";
@@ -5852,6 +5976,7 @@
       });
       renderReportEvidence(data.evidence);
       renderReportKnowledge(data.knowledge_sources);
+      renderReportTrace(data.agent_trace);
       renderReportActions(report, data.proposed_actions);
       renderReportFeedback(report, data);
     }

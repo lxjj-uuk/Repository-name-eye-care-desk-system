@@ -122,6 +122,22 @@ class CommandAck(BaseModel):
     result: Dict[str, Any] = Field(default_factory=dict)
 
 
+class ActionOutcomeOut(ORMModel):
+    id: int
+    device_id: str
+    command_id: int
+    action_name: str
+    status: str
+    baseline: Dict[str, Any]
+    post_check: Optional[Dict[str, Any]] = None
+    outcome: Optional[str] = None
+    summary: Optional[str] = None
+    next_action: Optional[str] = None
+    due_at: datetime
+    verified_at: Optional[datetime] = None
+    created_at: datetime
+
+
 class ReportOut(ORMModel):
     id: int
     device_id: str

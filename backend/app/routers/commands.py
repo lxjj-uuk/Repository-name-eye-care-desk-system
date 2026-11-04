@@ -5,8 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import Command, utcnow
-from ..schemas import CommandCreate, CommandOut
+from ..models import ActionOutcome, Command, utcnow
+from ..schemas import ActionOutcomeOut, CommandCreate, CommandOut
 from ..security import require_token
 from ..services.iotda import send_command
 from .devices import ensure_device, get_config
@@ -146,6 +146,18 @@ def get_command(command_id: int, db: Session = Depends(get_db)):
     if command is None:
         raise HTTPException(status_code=404, detail="command not found")
     return command
+
+
+@actions.get("/{command_id}/outcome", response_model=ActionOutcomeOut)
+def get_action_outcome(command_id: int, db: Session = Depends(get_db)):
+    outcome = (
+        db.query(ActionOutcome)
+        .filter(ActionOutcome.command_id == command_id)
+        .first()
+    )
+    if outcome is None:
+        raise HTTPException(status_code=404, detail="action outcome not found")
+    return outcome
 
 
 @actions.post("/{command_id}/confirm", response_model=CommandOut)

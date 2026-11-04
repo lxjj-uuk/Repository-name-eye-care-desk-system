@@ -1,6 +1,6 @@
 import os
 import warnings
-from datetime import date
+from datetime import date, timedelta
 from uuid import uuid4
 
 
@@ -21,7 +21,15 @@ os.environ["AI_GUARDIAN_ENABLED"] = "false"
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
-from app.models import DeviceConfig, Telemetry, UserMemory, utcnow  # noqa: E402
+from app.models import (  # noqa: E402
+    ActionOutcome,
+    DeviceConfig,
+    Telemetry,
+    UserMemory,
+    utcnow,
+)
+from app.db import SessionLocal  # noqa: E402
+from app.services.action_outcomes import verify_pending_outcomes  # noqa: E402
 from app.services.ai_guardian import should_trigger_guardian  # noqa: E402
 from app.services.ai_report import _fallback_actions  # noqa: E402
 
@@ -128,6 +136,8 @@ def test_full_flow():
         assert ai_data["source"] in {"rule+risk-model", "llm"}
         assert 2 <= len(ai_data["knowledge_sources"]) <= 3
         assert ai_data["evidence"]
+        assert ai_data["agent_trace"]
+        assert ai_data["agent_trace"][0]["stage"] == "感知"
         assert ai_data["ai_context"]["current"]["occupied"] is True
         assert ai_data["ai_context"]["last_command"]["name"] == "buzz"
         assert {item["tool"] for item in ai_data["tool_trace"]} >= {
@@ -268,9 +278,91 @@ def test_guardian_trigger():
     assert not should_trigger_guardian(row, config, memory)
 
 
+def test_action_outcome_verification():
+    with TestClient(app) as client:
+        login = client.post(
+            "/auth/login",
+            json={"username": "demo", "password": "demo123"},
+        )
+        headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
+        device_id = "outcome_test_device"
+        client.post(
+            "/ingest/telemetry",
+            headers=headers,
+            json={
+                "device_id": device_id,
+                "lux": 90,
+                "occupied": True,
+                "sit_cont_min": 50,
+                "risk": 0.45,
+                "risk_level": "medium",
+            },
+        )
+        command = client.post(
+            f"/devices/{device_id}/commands",
+            headers=headers,
+            json={
+                "command_name": "buzz",
+                "params": {"pattern": "short", "duration_ms": 250},
+            },
+        )
+        confirmed = client.post(
+            f"/commands/{command.json()['id']}/confirm",
+            headers=headers,
+        )
+        client.post(
+            f"/ingest/commands/{confirmed.json()['request_id']}/ack",
+            headers=headers,
+            json={"result_code": 0, "result": {"message": "forwarded"}},
+        )
+        pending = client.get(
+            f"/commands/{command.json()['id']}/outcome",
+            headers=headers,
+        )
+        assert pending.status_code == 200
+        assert pending.json()["status"] == "pending"
+
+        client.post(
+            "/ingest/telemetry",
+            headers=headers,
+            json={
+                "device_id": device_id,
+                "ts": (utcnow() + timedelta(seconds=1)).isoformat() + "Z",
+                "lux": 420,
+                "occupied": True,
+                "sit_cont_min": 12,
+                "risk": 0.2,
+                "risk_level": "low",
+            },
+        )
+        with SessionLocal() as db:
+            outcome = (
+                db.query(ActionOutcome)
+                .filter(ActionOutcome.command_id == command.json()["id"])
+                .first()
+            )
+            outcome.due_at = utcnow() - timedelta(seconds=1)
+            db.commit()
+            assert verify_pending_outcomes(db) == 1
+
+        verified = client.get(
+            f"/commands/{command.json()['id']}/outcome",
+            headers=headers,
+        )
+        assert verified.status_code == 200
+        assert verified.json()["status"] == "verified"
+        assert verified.json()["outcome"] == "improved"
+        memory = client.get(
+            f"/devices/{device_id}/memory",
+            headers=headers,
+        )
+        assert memory.json()["feedback_stats"]["action_outcomes"]["improved"] == 1
+
+
 if __name__ == "__main__":
     test_health()
     test_low_risk_warning_can_propose_action()
     test_guardian_trigger()
+    test_action_outcome_verification()
     test_full_flow()
     print("smoke tests passed")

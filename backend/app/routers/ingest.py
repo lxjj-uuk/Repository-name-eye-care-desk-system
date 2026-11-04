@@ -8,6 +8,7 @@ from ..db import get_db
 from ..models import Command, DeviceNetwork, Event, Telemetry, utcnow
 from ..schemas import CommandAck, CommandOut, EventIn, EventOut, TelemetryIn, TelemetryOut
 from ..security import require_token
+from ..services.action_outcomes import create_pending_outcome
 from .devices import ensure_device, get_config
 
 
@@ -153,6 +154,8 @@ def ack_command(
     command.status = "acked" if body.result_code == 0 else "failed"
     command.acked_at = utcnow()
     command.result = body.result
+    if body.result_code == 0:
+        create_pending_outcome(db, command)
     db.commit()
     db.refresh(command)
     return command

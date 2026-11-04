@@ -127,6 +127,32 @@ CREATE TABLE IF NOT EXISTS ai_feedback (
     ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS action_outcomes (
+  id INT NOT NULL AUTO_INCREMENT,
+  device_id VARCHAR(64) NOT NULL,
+  command_id INT NOT NULL,
+  action_name VARCHAR(64) NOT NULL,
+  status VARCHAR(16) NOT NULL DEFAULT 'pending',
+  baseline JSON NOT NULL,
+  post_check JSON NULL,
+  outcome VARCHAR(24) NULL,
+  summary TEXT NULL,
+  next_action TEXT NULL,
+  due_at DATETIME NOT NULL,
+  verified_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_action_outcome_command (command_id),
+  KEY idx_action_outcome_status_due (status, due_at),
+  KEY idx_action_outcome_device_created (device_id, created_at),
+  CONSTRAINT fk_action_outcome_device
+    FOREIGN KEY (device_id) REFERENCES devices (device_id)
+    ON DELETE CASCADE,
+  CONSTRAINT fk_action_outcome_command
+    FOREIGN KEY (command_id) REFERENCES commands (id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS user_memory (
   device_id VARCHAR(64) NOT NULL,
   preferred_reminder VARCHAR(32) NOT NULL DEFAULT 'balanced',

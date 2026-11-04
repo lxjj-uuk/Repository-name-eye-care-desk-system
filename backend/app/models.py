@@ -132,6 +132,35 @@ class Command(Base):
     acked_at = Column(DateTime)
 
 
+class ActionOutcome(Base):
+    __tablename__ = "action_outcomes"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    device_id = Column(
+        String(64),
+        ForeignKey("devices.device_id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    command_id = Column(
+        Integer,
+        ForeignKey("commands.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+    action_name = Column(String(64), nullable=False)
+    status = Column(String(16), nullable=False, default="pending", index=True)
+    baseline = Column(JSON, nullable=False, default=dict)
+    post_check = Column(JSON)
+    outcome = Column(String(24))
+    summary = Column(Text)
+    next_action = Column(Text)
+    due_at = Column(DateTime, nullable=False, index=True)
+    verified_at = Column(DateTime)
+    created_at = Column(DateTime, nullable=False, default=utcnow, index=True)
+
+
 class Report(Base):
     __tablename__ = "reports"
     __table_args__ = (

@@ -12,6 +12,7 @@ from .db import Base, SessionLocal, engine
 from .routers import auth, commands, devices, feedback, ingest, reports
 from .services.ai_tools import TOOL_DEFINITIONS
 from .services.ai_guardian import run_guardian
+from .services.action_outcomes import run_outcome_verifier
 from .services.knowledge import load_knowledge
 from .services.local_llm import get_model_name, is_available as local_llm_available
 
@@ -28,6 +29,8 @@ async def lifespan(app: FastAPI):
     mqtt_thread = None
     guardian_stop = threading.Event()
     guardian_thread = None
+    outcome_stop = threading.Event()
+    outcome_thread = None
     if (
         settings.iotda_app_mqtt_enabled
         and settings.iotda_app_mqtt_configured
@@ -49,6 +52,13 @@ async def lifespan(app: FastAPI):
             daemon=True,
         )
         guardian_thread.start()
+    outcome_thread = threading.Thread(
+        target=run_outcome_verifier,
+        args=(outcome_stop,),
+        name="action-outcome-verifier",
+        daemon=True,
+    )
+    outcome_thread.start()
     try:
         yield
     finally:
@@ -58,12 +68,15 @@ async def lifespan(app: FastAPI):
         if guardian_thread is not None:
             guardian_stop.set()
             guardian_thread.join(timeout=3)
+        if outcome_thread is not None:
+            outcome_stop.set()
+            outcome_thread.join(timeout=3)
 
 
 app = FastAPI(
     title="Eye Care Desk API",
     description="工位用眼健康与桌面微环境监护系统后端",
-    version="0.2.2",
+    version="0.2.3",
     lifespan=lifespan,
 )
 
@@ -101,7 +114,7 @@ def health():
     return {
         "status": "ok",
         "service": "eye-care-api",
-        "version": "0.2.2",
+        "version": "0.2.3",
         "ai": {
             "local_available": local_llm_available(),
             "local_model": get_model_name() if local_llm_available() else None,
@@ -114,5 +127,6 @@ def health():
                 "interval_seconds": settings.ai_guardian_interval_s,
                 "cooldown_seconds": settings.ai_guardian_cooldown_s,
             },
+            "outcome_verification_seconds": settings.outcome_verify_delay_s,
         },
     }
